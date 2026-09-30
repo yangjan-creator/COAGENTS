@@ -1,0 +1,27 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: apc
+      POSTGRES_USER: apc
+      POSTGRES_PASSWORD: apc
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U apc -d apc"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - apc-postgres:/var/lib/postgresql/data
+
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://apc:apc@db:5432/apc
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+volumes:
+  apc-postgres:
