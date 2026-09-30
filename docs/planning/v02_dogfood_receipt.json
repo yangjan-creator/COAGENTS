@@ -1,0 +1,71 @@
+{
+  "service": {
+    "status": "ok",
+    "service": "COAGENTS",
+    "version": "0.2.0"
+  },
+  "project": {
+    "id": "2811d8cd-5dc5-45cd-8914-155bff67e6ff",
+    "team_id": "8a87a836-c8e3-4638-adb8-32740a86715c",
+    "key": "CG-PLAN",
+    "name": "COAGENTS 完整產品規劃",
+    "status": "ACTIVE",
+    "created_at": "2026-09-30T23:42:22.290181+00:00"
+  },
+  "root": {
+    "id": "ad4f70a4-78ae-489d-8319-4ac469cb4bd0",
+    "key": "CG-PLAN-ROOT"
+  },
+  "items": [
+    {
+      "id": "1e263693-50b3-4641-a322-882b3c999136",
+      "key": "CG-PLAN-AUTH",
+      "title": "專案主控、細粒度權限與一次性授權"
+    },
+    {
+      "id": "68309bb5-4153-417f-bdf1-b261c3c3f668",
+      "key": "CG-PLAN-KNOW",
+      "title": "報告／Rule／Memory 與知識版本"
+    },
+    {
+      "id": "1733dfad-52be-4af4-bc87-87c19a00aef1",
+      "key": "CG-PLAN-CODE",
+      "title": "Git、核心程式、Function／接點／欄位登錄"
+    },
+    {
+      "id": "90871d6f-ad36-42d3-abf3-90f3bf380551",
+      "key": "CG-PLAN-GATE",
+      "title": "獨立驗收、完成定義與變更影響"
+    },
+    {
+      "id": "3bd8db48-1103-4171-b12d-adf768bff349",
+      "key": "CG-PLAN-UI",
+      "title": "人用 Dashboard、Template 與 Agent API/MCP"
+    },
+    {
+      "id": "3b7fc23d-149f-4677-8e06-ef03d0da13a1",
+      "key": "CG-PLAN-OPS",
+      "title": "SQL 升級、排程通知、備份與運維"
+    }
+  ],
+  "provider_requests": 0,
+  "independent_review": false,
+  "probes": {
+    "contributor_create_project": {
+      "status": 403,
+      "detail": "this action requires PM"
+    },
+    "project_owner_field_present": false,
+    "pm_visible_projects": [
+      "CG-PLAN",
+      "DEMO"
+    ],
+    "contributor_visible_projects": [
+      "CG-PLAN"
+    ],
+    "project_delete_api_present": false,
+    "authorization_routes": [],
+    "project_knowledge_routes": [],
+    "operations": "create shared project; expand six features; claims; progress; root HOLD"
+  }
+}

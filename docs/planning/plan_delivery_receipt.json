@@ -1,0 +1,104 @@
+{
+  "author": "滴",
+  "scope": "local v0.2 planning dogfood",
+  "project_key": "CG-PLAN",
+  "project_id": "2811d8cd-5dc5-45cd-8914-155bff67e6ff",
+  "plan": {
+    "path": "/home/sky/projects/agent-project-control/docs/PROJECT_PLAN.md",
+    "sha256": "390967ac9b69505eb028599fb589fd0e9a73dc905cc1b2a7221d2c96348a6863",
+    "bytes": 28637
+  },
+  "version": {
+    "id": "1c4c02f2-c961-486c-b165-73da24d5793a",
+    "work_item_id": "ad4f70a4-78ae-489d-8319-4ac469cb4bd0",
+    "ordinal": 2,
+    "state": "DRAFT",
+    "change_note": "完整產品計畫 v1：明示 Overview 去除首尾空白；只規劃，不開 DEV",
+    "source_ref": "/home/sky/projects/agent-project-control/docs/PROJECT_PLAN.md",
+    "source_sha256": "390967ac9b69505eb028599fb589fd0e9a73dc905cc1b2a7221d2c96348a6863",
+    "created_by": "coagents-plan-builder",
+    "created_at": "2026-09-30T23:53:34.860919+00:00"
+  },
+  "artifact": {
+    "id": "6467057b-d6ec-4ed3-b6b4-39224320cfff",
+    "project_id": "2811d8cd-5dc5-45cd-8914-155bff67e6ff",
+    "path": "/home/sky/projects/agent-project-control/docs/planning/PLAN_V1_SNAPSHOT.md",
+    "sha256": "390967ac9b69505eb028599fb589fd0e9a73dc905cc1b2a7221d2c96348a6863",
+    "bytes": 28637,
+    "media_type": "text/markdown",
+    "owner_actor": "coagents-plan-builder",
+    "purpose": "EVIDENCE",
+    "retention_state": "EVIDENCE",
+    "source_ref": "/home/sky/projects/agent-project-control/docs/PROJECT_PLAN.md",
+    "created_at": "2026-09-30T23:54:23.474557+00:00"
+  },
+  "overview": {
+    "id": "1949ad70-604c-4f0d-80cc-7be816f8a06c",
+    "body_sha256": "88dea1f9e474a8dc7a9583baf67f990167654a686e6a3ec20b658c8a9771a8b7",
+    "normalization": "strip leading/trailing whitespace",
+    "normalized_body_equal": true
+  },
+  "pm_summary": {
+    "id": "57c5cd06-1649-4549-b8e0-d0fec4f50819",
+    "project_id": "2811d8cd-5dc5-45cd-8914-155bff67e6ff",
+    "author": "coagents-plan-pm",
+    "body_markdown": "完整計畫 v1 已登錄。v0.2 能管階層、認領、進度、版本、Overview、Summary、Artifact、Gate；缺專案主控、細粒度跨案權限、一次性授權、typed知識與程式登錄。兩個actor是同一執行者，不算獨立審查。只規劃，不開DEV／不部署。發現API去除首尾空白、同路徑Artifact不能重登：留首次嘗試歷史，以相同內容版本快照登錄；原檔與Overview分別記digest並驗正文相等。根HOLD、四格PENDING。",
+    "evidence_refs": [
+      "/home/sky/projects/agent-project-control/docs/PROJECT_PLAN.md#sha256=390967ac9b69505eb028599fb589fd0e9a73dc905cc1b2a7221d2c96348a6863",
+      "/home/sky/projects/agent-project-control/docs/planning/PLAN_V1_SNAPSHOT.md"
+    ],
+    "created_at": "2026-09-30T23:54:23.494680+00:00"
+  },
+  "root_status": "HOLD",
+  "gates": [
+    {
+      "id": "d15c4ec4-545a-4e88-9725-c5bc8ed6e0a7",
+      "work_version_id": "1c4c02f2-c961-486c-b165-73da24d5793a",
+      "name": "主控／跨案權限／一次性能力設計待核定",
+      "required": true,
+      "status": "PENDING",
+      "evidence_uri": null,
+      "evidence_sha256": null,
+      "checked_by": null,
+      "checked_at": null
+    },
+    {
+      "id": "342c8bdd-0d0c-4ae3-bb8c-12b1f1d1c82b",
+      "work_version_id": "1c4c02f2-c961-486c-b165-73da24d5793a",
+      "name": "知識／程式／欄位／接點與驗收閉環待核定",
+      "required": true,
+      "status": "PENDING",
+      "evidence_uri": null,
+      "evidence_sha256": null,
+      "checked_by": null,
+      "checked_at": null
+    },
+    {
+      "id": "3547a6db-9174-4390-ada6-78be61f7e4c9",
+      "work_version_id": "1c4c02f2-c961-486c-b165-73da24d5793a",
+      "name": "Dashboard／API／MCP／Skill與階段範圍待核定",
+      "required": true,
+      "status": "PENDING",
+      "evidence_uri": null,
+      "evidence_sha256": null,
+      "checked_by": null,
+      "checked_at": null
+    },
+    {
+      "id": "b9deb9bf-b12a-4424-ba0f-691ceb7a02cc",
+      "work_version_id": "1c4c02f2-c961-486c-b165-73da24d5793a",
+      "name": "v0.2自用收據與限制待獨立確認",
+      "required": true,
+      "status": "PENDING",
+      "evidence_uri": null,
+      "evidence_sha256": null,
+      "checked_by": null,
+      "checked_at": null
+    }
+  ],
+  "provider_requests": 0,
+  "independent_review": false,
+  "new_features_deployed": false,
+  "temporary_member_keys_revoked": true,
+  "partial_attempts_retained": true
+}
