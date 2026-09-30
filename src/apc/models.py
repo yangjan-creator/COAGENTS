@@ -37,6 +37,51 @@ class Project(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
+class ProjectTeam(Base):
+    __tablename__ = "project_teams"
+    __table_args__ = (UniqueConstraint("project_id", "team_id", name="uq_project_team"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    project_id: Mapped[str] = mapped_column(ForeignKey("projects.id"), index=True)
+    team_id: Mapped[str] = mapped_column(ForeignKey("teams.id"), index=True)
+
+
+class Member(Base):
+    __tablename__ = "members"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    actor: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(160))
+    kind: Mapped[str] = mapped_column(String(16))
+    role: Mapped[str] = mapped_column(String(24))
+    team_id: Mapped[str | None] = mapped_column(ForeignKey("teams.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class MemberKey(Base):
+    __tablename__ = "member_keys"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    member_id: Mapped[str] = mapped_column(ForeignKey("members.id"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class WorkDetails(Base):
+    __tablename__ = "work_details"
+    work_item_id: Mapped[str] = mapped_column(ForeignKey("work_items.id"), primary_key=True)
+    description: Mapped[str] = mapped_column(Text, default="")
+    team_id: Mapped[str | None] = mapped_column(ForeignKey("teams.id"), nullable=True)
+    priority: Mapped[str] = mapped_column(String(16), default="NORMAL")
+    progress_percent: Mapped[int] = mapped_column(Integer, default=0)
+    labels: Mapped[list] = mapped_column(JSON, default=list)
+
+
+class WorkDependency(Base):
+    __tablename__ = "work_dependencies"
+    __table_args__ = (UniqueConstraint("item_id", "depends_on_id", name="uq_dependency"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    item_id: Mapped[str] = mapped_column(ForeignKey("work_items.id"), index=True)
+    depends_on_id: Mapped[str] = mapped_column(ForeignKey("work_items.id"), index=True)
+
+
 class WorkItem(Base):
     __tablename__ = "work_items"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)

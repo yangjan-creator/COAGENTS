@@ -1,348 +1,686 @@
-from collections.abc import Generator
+"""COAGENTS: one service for the dashboard, agents, and project records."""
 
-from fastapi import Depends, FastAPI, HTTPException, status
-from fastapi.responses import HTMLResponse
-from sqlalchemy import select
+import hashlib
+import secrets
+from contextlib import asynccontextmanager
+from pathlib import Path, PurePosixPath
+
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from sqlalchemy import create_engine, event as sql_event, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.inspection import inspect
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
-from apc.db import SessionLocal, init_db
-from apc.models import (
-    Artifact,
-    ArtifactReference,
-    AuditEvent,
-    DashboardTemplate,
-    DashboardTemplateRevision,
-    PMSummaryEntry,
-    Project,
-    ProjectOverviewRevision,
-    Team,
-    ValidationGate,
-    WorkItem,
-    WorkVersion,
-    now,
-)
-from apc.schemas import (
-    ArtifactCreate,
-    ArtifactReferenceCreate,
-    Claim,
-    DashboardTemplateCreate,
-    DashboardTemplateRevisionCreate,
-    GateCreate,
-    GateResult,
-    OverviewUpdate,
-    PMSummaryCreate,
-    ProgressUpdate,
-    ProjectCreate,
-    TeamCreate,
-    VersionCreate,
-    WorkItemCreate,
-)
+from apc import models as m
+from apc import schemas as s
+from apc.settings import Settings
 
-app = FastAPI(title="Agent Project Control", version="0.1.0")
-
-
-@app.on_event("startup")
-def startup() -> None:
-    init_db()
-
-
-def db_session() -> Generator[Session, None, None]:
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-def event(
-    db: Session,
-    project_id: str,
-    actor: str,
-    event_type: str,
-    message: str,
-    work_item_id: str | None = None,
-    version_id: str | None = None,
-    payload: dict | None = None,
-) -> None:
-    db.add(
-        AuditEvent(
-            project_id=project_id,
-            work_item_id=work_item_id,
-            version_id=version_id,
-            actor=actor,
-            event_type=event_type,
-            message=message,
-            payload=payload or {},
-        )
-    )
+STATIC = Path(__file__).parent / "static"
 
 
 def dump(obj):
-    """Expose columns only; ORM internals and relationships never become API output."""
-    if isinstance(obj, list):
-        return [dump(item) for item in obj]
-    return {column.key: getattr(obj, column.key) for column in inspect(obj).mapper.column_attrs}
+    if isinstance(obj, (list, tuple)):
+        return [dump(row) for row in obj]
+    if obj is None:
+        return None
+    return {col.key: getattr(obj, col.key) for col in inspect(obj).mapper.column_attrs}
 
 
-def require_project(db: Session, project_id: str) -> Project:
-    obj = db.get(Project, project_id)
-    if not obj:
-        raise HTTPException(404, "project not found")
-    return obj
+def get(db, cls, key):
+    row = db.get(cls, key)
+    if row is None:
+        raise HTTPException(404, f"{cls.__name__} not found")
+    return row
 
 
-def require_item(db: Session, item_id: str) -> WorkItem:
-    obj = db.get(WorkItem, item_id)
-    if not obj:
+def emit(db, project_id, actor, kind, message, item=None, version=None, payload=None):
+    db.add(m.AuditEvent(
+        project_id=project_id, actor=actor, event_type=kind, message=message,
+        work_item_id=item, version_id=version, payload=payload or {},
+    ))
+
+
+def command_actor(db, actor, roles=None):
+    principal = db.info.get("principal")
+    if principal and principal["actor"] != actor:
+        raise HTTPException(403, "actor does not match the authenticated identity")
+    if actor == "pm":
+        return {"actor": "pm", "role": "PM", "team_id": None}
+    row = db.scalar(select(m.Member).where(m.Member.actor == actor))
+    if not row:
+        raise HTTPException(422, "register this member before issuing commands")
+    if roles and row.role not in roles:
+        raise HTTPException(403, "this action requires " + "/".join(roles))
+    return dump(row)
+
+
+def project_access(db, project_id, actor=None):
+    project = get(db, m.Project, project_id)
+    principal = command_actor(db, actor) if actor else db.info.get("principal")
+    if principal and principal["role"] != "PM":
+        teams = set(db.scalars(select(m.ProjectTeam.team_id).where(
+            m.ProjectTeam.project_id == project_id
+        )).all()) | {project.team_id}
+        if principal.get("team_id") not in teams:
+            raise HTTPException(403, "project is outside the member's teams")
+    return project
+
+
+def locked_item(db, item_id, actor=None):
+    row = db.scalar(select(m.WorkItem).where(m.WorkItem.id == item_id).with_for_update())
+    if not row:
         raise HTTPException(404, "work item not found")
-    return obj
+    project_access(db, row.project_id, actor)
+    return row
 
 
-@app.get("/healthz")
-def healthz() -> dict:
-    return {"status": "ok"}
+def details(db, item):
+    row = db.get(m.WorkDetails, item.id)
+    if not row:
+        row = m.WorkDetails(work_item_id=item.id)
+        db.add(row)
+        db.flush()
+    return row
 
 
-@app.post("/teams", status_code=status.HTTP_201_CREATED, response_model=None)
-def create_team(body: TeamCreate, db: Session = Depends(db_session)) -> Team:
-    team = Team(slug=body.slug, name=body.name)
-    db.add(team)
-    db.flush()
-    db.commit()
-    return dump(team)
+def item_view(db, item):
+    result = dump(item)
+    detail = db.get(m.WorkDetails, item.id)
+    result.update(
+        description=detail.description if detail else "",
+        team_id=detail.team_id if detail else None,
+        priority=detail.priority if detail else "NORMAL",
+        progress_percent=detail.progress_percent if detail else 0,
+        labels=detail.labels if detail else [],
+    )
+    version = db.get(m.WorkVersion, item.current_version_id) if item.current_version_id else None
+    result["current_version"] = dump(version)
+    gates = db.scalars(select(m.ValidationGate).where(
+        m.ValidationGate.work_version_id == version.id
+    )).all() if version else []
+    result["gates"] = dump(gates)
+    required = [gate for gate in gates if gate.required]
+    result["validation"] = (
+        "FAILED" if any(gate.status == "FAILED" for gate in required) else
+        "PASSED" if required and all(gate.status in {"PASSED", "WAIVED"} for gate in required) else
+        "PENDING" if required else "NOT_DECLARED"
+    )
+    result["dependencies"] = list(db.scalars(select(m.WorkDependency.depends_on_id).where(
+        m.WorkDependency.item_id == item.id
+    )).all())
+    return result
 
 
-@app.post("/projects", status_code=status.HTTP_201_CREATED, response_model=None)
-def create_project(body: ProjectCreate, db: Session = Depends(db_session)) -> Project:
-    if not db.get(Team, body.team_id):
-        raise HTTPException(404, "team not found")
-    project = Project(team_id=body.team_id, key=body.key, name=body.name)
-    db.add(project)
-    db.flush()
-    event(db, project.id, body.actor, "PROJECT_CREATED", f"Created project {project.key}")
-    db.commit()
-    return dump(project)
-
-
-@app.post("/projects/{project_id}/items", status_code=status.HTTP_201_CREATED, response_model=None)
-def create_work_item(project_id: str, body: WorkItemCreate, db: Session = Depends(db_session)) -> WorkItem:
-    require_project(db, project_id)
-    if body.parent_id:
-        parent = require_item(db, body.parent_id)
-        if parent.project_id != project_id:
-            raise HTTPException(422, "parent belongs to another project")
-    item = WorkItem(project_id=project_id, **body.model_dump(exclude={"actor"}))
-    db.add(item)
-    db.flush()
-    event(db, project_id, body.actor, "WORK_ITEM_CREATED", body.title, work_item_id=item.id)
-    db.commit()
-    return dump(item)
-
-
-@app.post("/items/{item_id}/claim", response_model=None)
-def claim_item(item_id: str, body: Claim, db: Session = Depends(db_session)) -> WorkItem:
-    item = require_item(db, item_id)
-    if item.status not in {"DRAFT", "QUEUED", "CLAIMED"} and item.owner_actor != body.actor:
-        raise HTTPException(409, f"cannot claim item in {item.status}")
-    item.owner_actor, item.status = body.actor, "CLAIMED"
-    event(db, item.project_id, body.actor, "WORK_CLAIMED", "Claimed work item", item.id)
-    db.commit()
-    return dump(item)
-
-
-@app.post("/items/{item_id}/progress", response_model=None)
-def update_progress(item_id: str, body: ProgressUpdate, db: Session = Depends(db_session)) -> WorkItem:
-    item = require_item(db, item_id)
-    if item.owner_actor and item.owner_actor != body.actor:
-        raise HTTPException(403, "only the current owner may report progress")
-    if body.status:
-        if body.status == "VERIFIED":
-            raise HTTPException(422, "VERIFIED is granted only through gate completion")
-        item.status = body.status
-    event(db, item.project_id, body.actor, "PROGRESS_REPORTED", body.message, item.id, payload=body.payload)
-    db.commit()
-    return dump(item)
-
-
-@app.post("/items/{item_id}/versions", status_code=status.HTTP_201_CREATED, response_model=None)
-def create_version(item_id: str, body: VersionCreate, db: Session = Depends(db_session)) -> WorkVersion:
-    item = require_item(db, item_id)
-    ordinal = (db.scalar(select(WorkVersion.ordinal).where(WorkVersion.work_item_id == item_id).order_by(WorkVersion.ordinal.desc())) or 0) + 1
-    version = WorkVersion(work_item_id=item_id, ordinal=ordinal, created_by=body.actor, **body.model_dump(exclude={"actor"}))
-    db.add(version)
-    db.flush()
-    item.current_version_id, item.status = version.id, "WORKING"
-    event(db, item.project_id, body.actor, "VERSION_CREATED", f"Created v{ordinal}", item.id, version.id)
-    db.commit()
-    return dump(version)
-
-
-@app.post("/versions/{version_id}/gates", status_code=status.HTTP_201_CREATED, response_model=None)
-def create_gate(version_id: str, body: GateCreate, db: Session = Depends(db_session)) -> ValidationGate:
-    version = db.get(WorkVersion, version_id)
-    if not version:
-        raise HTTPException(404, "version not found")
-    item = require_item(db, version.work_item_id)
-    gate = ValidationGate(work_version_id=version_id, name=body.name, required=body.required)
-    db.add(gate)
-    db.flush()
-    event(db, item.project_id, body.actor, "GATE_DECLARED", body.name, item.id, version.id)
-    db.commit()
-    return dump(gate)
-
-
-@app.post("/gates/{gate_id}/result", response_model=None)
-def record_gate_result(gate_id: str, body: GateResult, db: Session = Depends(db_session)) -> ValidationGate:
-    gate = db.get(ValidationGate, gate_id)
-    if not gate:
-        raise HTTPException(404, "gate not found")
-    if body.status in {"PASSED", "WAIVED"} and not body.evidence_uri:
-        raise HTTPException(422, "PASSED/WAIVED requires an evidence_uri")
-    version = db.get(WorkVersion, gate.work_version_id)
-    item = require_item(db, version.work_item_id)
-    gate.status, gate.evidence_uri, gate.evidence_sha256 = body.status, body.evidence_uri, body.evidence_sha256
-    gate.checked_by, gate.checked_at = body.actor, now()
-    event(db, item.project_id, body.actor, "GATE_RESULT", body.message, item.id, version.id, {"gate": gate.name, "status": body.status})
-    required = db.scalars(select(ValidationGate).where(ValidationGate.work_version_id == version.id, ValidationGate.required.is_(True))).all()
-    if required and all(x.status in {"PASSED", "WAIVED"} for x in required):
-        version.state, item.status = "VERIFIED", "VERIFIED"
-        event(db, item.project_id, "system", "VERSION_VERIFIED", f"v{version.ordinal} required gates closed", item.id, version.id)
-    elif body.status == "FAILED":
-        version.state, item.status = "FAILED", "BLOCKED"
-    db.commit()
-    return dump(gate)
-
-
-@app.post("/projects/{project_id}/overview", response_model=None)
-def update_overview(project_id: str, body: OverviewUpdate, db: Session = Depends(db_session)) -> ProjectOverviewRevision:
-    require_project(db, project_id)
-    revision = ProjectOverviewRevision(project_id=project_id, body_markdown=body.body_markdown, updated_by=body.actor)
-    db.add(revision)
-    event(db, project_id, body.actor, "OVERVIEW_REVISED", "Updated project overview")
-    db.commit()
-    return dump(revision)
-
-
-@app.post("/projects/{project_id}/pm-summaries", status_code=status.HTTP_201_CREATED, response_model=None)
-def create_pm_summary(project_id: str, body: PMSummaryCreate, db: Session = Depends(db_session)) -> PMSummaryEntry:
-    require_project(db, project_id)
-    summary = PMSummaryEntry(project_id=project_id, author=body.actor, body_markdown=body.body_markdown, evidence_refs=body.evidence_refs)
-    db.add(summary)
-    event(db, project_id, body.actor, "PM_SUMMARY_APPENDED", "Appended PM summary")
-    db.commit()
-    return dump(summary)
-
-
-@app.post("/projects/{project_id}/artifacts", status_code=status.HTTP_201_CREATED, response_model=None)
-def register_artifact(project_id: str, body: ArtifactCreate, db: Session = Depends(db_session)) -> Artifact:
-    require_project(db, project_id)
-    path = body.path.rstrip("/")
-    is_db = path.endswith((".sqlite", ".sqlite3", ".db"))
-    if is_db and ("/reports/" in path or "/frozen_" in path):
-        raise HTTPException(422, "database copies cannot be registered under reports or frozen packages")
-    artifact = Artifact(project_id=project_id, path=path, owner_actor=body.actor, **body.model_dump(exclude={"actor", "path"}))
-    db.add(artifact)
-    db.flush()
-    event(db, project_id, body.actor, "ARTIFACT_REGISTERED", path, payload={"sha256": body.sha256, "bytes": body.bytes})
-    db.commit()
-    return dump(artifact)
-
-
-@app.post("/artifacts/{artifact_id}/references", status_code=status.HTTP_201_CREATED, response_model=None)
-def reference_artifact(artifact_id: str, body: ArtifactReferenceCreate, db: Session = Depends(db_session)) -> ArtifactReference:
-    artifact = db.get(Artifact, artifact_id)
-    if not artifact:
-        raise HTTPException(404, "artifact not found")
-    ref = ArtifactReference(artifact_id=artifact_id, ref_kind=body.ref_kind, ref_id=body.ref_id)
-    db.add(ref)
-    event(db, artifact.project_id, body.actor, "ARTIFACT_REFERENCED", artifact.path, payload={"ref_kind": body.ref_kind, "ref_id": body.ref_id})
-    db.commit()
-    return dump(ref)
-
-
-@app.get("/artifacts/{artifact_id}/deletion-check")
-def artifact_deletion_check(artifact_id: str, db: Session = Depends(db_session)) -> dict:
-    artifact = db.get(Artifact, artifact_id)
-    if not artifact:
-        raise HTTPException(404, "artifact not found")
-    refs = db.scalars(select(ArtifactReference).where(ArtifactReference.artifact_id == artifact_id)).all()
-    protected = artifact.retention_state in {"UNIQUE_INPUT", "ROLLBACK_POINT"}
+def deletion_check(db, artifact):
+    refs = db.scalars(select(m.ArtifactReference).where(
+        m.ArtifactReference.artifact_id == artifact.id
+    )).all()
+    protected = artifact.retention_state in {"UNIQUE_INPUT", "ROLLBACK_POINT", "DELETED"}
     return {
-        "artifact_id": artifact_id,
-        "path": artifact.path,
-        "retention_state": artifact.retention_state,
-        "references": [{"kind": r.ref_kind, "id": r.ref_id} for r in refs],
+        "artifact_id": artifact.id, "path": artifact.path,
+        "retention_state": artifact.retention_state, "references": dump(refs),
         "allowed": not protected and not refs,
-        "reason": "protected retention state" if protected else ("still referenced" if refs else "no live references"),
+        "reason": "protected or already deleted" if protected else "still referenced" if refs else "unreferenced",
+        "scope": "registry only; inspect actual file/process use before physical deletion",
     }
 
 
-@app.get("/projects/{project_id}/history", response_model=None)
-def project_history(project_id: str, db: Session = Depends(db_session)) -> list[AuditEvent]:
-    require_project(db, project_id)
-    return dump(db.scalars(select(AuditEvent).where(AuditEvent.project_id == project_id).order_by(AuditEvent.created_at)).all())
+def locked_artifact(db, artifact_id, actor):
+    row = db.scalar(select(m.Artifact).where(m.Artifact.id == artifact_id).with_for_update())
+    if not row:
+        raise HTTPException(404, "artifact not found")
+    project_access(db, row.project_id, actor)
+    return row
 
 
-@app.post("/dashboard-templates", status_code=status.HTTP_201_CREATED, response_model=None)
-def create_dashboard_template(body: DashboardTemplateCreate, db: Session = Depends(db_session)) -> DashboardTemplate:
-    if body.team_id and not db.get(Team, body.team_id):
-        raise HTTPException(404, "team not found")
-    if body.project_id:
-        require_project(db, body.project_id)
-    template = DashboardTemplate(
-        team_id=body.team_id,
-        project_id=body.project_id,
-        name=body.name,
-        description=body.description,
-        created_by=body.actor,
-    )
-    db.add(template)
-    db.flush()
-    revision = DashboardTemplateRevision(template_id=template.id, ordinal=1, layout=body.layout, created_by=body.actor)
-    db.add(revision)
-    db.flush()
-    template.current_revision_id = revision.id
-    db.commit()
-    return dump(template)
+DEFAULT_LAYOUT = {
+    "title": "專案管制總覽", "statuses": [],
+    "widgets": [
+        {"type": "metric", "title": "工作項目", "query": "items"},
+        {"type": "metric", "title": "已驗證", "query": "verified"},
+        {"type": "metric", "title": "阻塞 / HOLD", "query": "blocked"},
+        {"type": "metric", "title": "待驗證格", "query": "pending_gates"},
+        {"type": "table", "title": "工作與交付版本", "query": "items",
+         "columns": ["key", "title", "team", "owner_actor", "status", "version", "validation", "progress"]},
+        {"type": "summary", "title": "PM 整合紀錄", "query": "summaries"},
+        {"type": "artifacts", "title": "檔案與資料資產", "query": "artifacts"},
+        {"type": "timeline", "title": "最新歷程", "query": "events"},
+    ],
+}
 
 
-@app.post("/dashboard-templates/{template_id}/revisions", status_code=status.HTTP_201_CREATED, response_model=None)
-def revise_dashboard_template(template_id: str, body: DashboardTemplateRevisionCreate, db: Session = Depends(db_session)) -> DashboardTemplateRevision:
-    template = db.get(DashboardTemplate, template_id)
-    if not template:
-        raise HTTPException(404, "dashboard template not found")
-    ordinal = (db.scalar(select(DashboardTemplateRevision.ordinal).where(DashboardTemplateRevision.template_id == template_id).order_by(DashboardTemplateRevision.ordinal.desc())) or 0) + 1
-    revision = DashboardTemplateRevision(template_id=template_id, ordinal=ordinal, layout=body.layout, created_by=body.actor)
-    db.add(revision)
-    db.flush()
-    template.current_revision_id = revision.id
-    db.commit()
-    return dump(revision)
+def create_app(database_url=None, admin_token=None):
+    settings = Settings()
+    url = database_url or settings.database_url
+    token = settings.coagents_admin_token if admin_token is None else admin_token
+    opts = {"connect_args": {"check_same_thread": False}} if url.startswith("sqlite") else {}
+    if url in {"sqlite://", "sqlite:///:memory:"}:
+        opts["poolclass"] = StaticPool
+    engine = create_engine(url, **opts)
+    if url.startswith("sqlite"):
+        @sql_event.listens_for(engine, "connect")
+        def sqlite_fk(connection, _):
+            connection.execute("PRAGMA foreign_keys=ON")
+    sessions = sessionmaker(bind=engine, expire_on_commit=False)
+
+    @asynccontextmanager
+    async def lifespan(_app):
+        m.Base.metadata.create_all(engine)
+        yield
+        engine.dispose()
+
+    app = FastAPI(title="COAGENTS", version="0.2.0", lifespan=lifespan)
+    app.state.engine = engine
+    app.state.sessions = sessions
+
+    @app.middleware("http")
+    async def authenticate(request: Request, call_next):
+        public = request.url.path in {"/", "/dashboard", "/healthz", "/docs", "/openapi.json", "/redoc", "/docs/oauth2-redirect"} or request.url.path.startswith("/static/")
+        request.state.principal = None
+        if token and not public:
+            bearer = request.headers.get("authorization", "")
+            value = bearer[7:] if bearer.startswith("Bearer ") else ""
+            if secrets.compare_digest(value, token):
+                request.state.principal = {"actor": "pm", "role": "PM", "team_id": None}
+            else:
+                with sessions() as db:
+                    key = db.scalar(select(m.MemberKey).where(
+                        m.MemberKey.token_hash == hashlib.sha256(value.encode()).hexdigest()
+                    )) if value else None
+                    member = db.get(m.Member, key.member_id) if key else None
+                    if not member:
+                        return JSONResponse({"detail": "a valid COAGENTS token is required"}, status_code=401)
+                    request.state.principal = dump(member)
+        return await call_next(request)
+
+    def db_session(request: Request):
+        with sessions() as db:
+            db.info["principal"] = request.state.principal
+            yield db
+
+    DB = Depends(db_session)
+
+    @app.exception_handler(IntegrityError)
+    async def conflict(_request, _exc):
+        return JSONResponse({"detail": "duplicate key or invalid reference"}, status_code=409)
+
+    @app.get("/healthz")
+    def health():
+        with engine.connect() as connection:
+            connection.exec_driver_sql("SELECT 1")
+        return {"status": "ok", "service": "COAGENTS", "version": "0.2.0"}
+
+    @app.get("/session")
+    def identity(request: Request):
+        return {"auth_enabled": bool(token), "principal": request.state.principal}
+
+    @app.get("/teams")
+    def list_teams(db: Session = DB):
+        principal = db.info.get("principal")
+        rows = db.scalars(select(m.Team).order_by(m.Team.name)).all()
+        if principal and principal["role"] != "PM":
+            rows = [row for row in rows if row.id == principal["team_id"]]
+        return dump(rows)
+
+    @app.post("/teams", status_code=201)
+    def create_team(body: s.TeamCreate, db: Session = DB):
+        command_actor(db, body.actor, {"PM"})
+        row = m.Team(slug=body.slug, name=body.name)
+        db.add(row)
+        db.commit()
+        return dump(row)
+
+    @app.get("/members")
+    def list_members(db: Session = DB):
+        rows = db.scalars(select(m.Member).order_by(m.Member.name)).all()
+        principal = db.info.get("principal")
+        if principal and principal["role"] != "PM":
+            rows = [row for row in rows if row.team_id == principal["team_id"]]
+        return dump(rows)
+
+    @app.post("/members", status_code=201)
+    def create_member(body: s.MemberCreate, db: Session = DB):
+        command_actor(db, body.actor, {"PM"})
+        if body.member_actor == "pm":
+            raise HTTPException(422, "pm is reserved for the administrator")
+        if body.team_id:
+            get(db, m.Team, body.team_id)
+        row = m.Member(actor=body.member_actor, name=body.name, kind=body.kind,
+                       role=body.role, team_id=body.team_id)
+        db.add(row)
+        db.commit()
+        return dump(row)
+
+    @app.post("/members/{member_id}/keys", status_code=201)
+    def issue_member_key(member_id: str, body: s.Claim, db: Session = DB):
+        command_actor(db, body.actor, {"PM"})
+        get(db, m.Member, member_id)
+        value = "coa_" + secrets.token_urlsafe(32)
+        row = m.MemberKey(member_id=member_id, token_hash=hashlib.sha256(value.encode()).hexdigest())
+        db.add(row)
+        db.commit()
+        return {"id": row.id, "token": value, "notice": "save now; only the hash is stored"}
+
+    @app.delete("/members/{member_id}/keys/{key_id}")
+    def revoke_member_key(member_id: str, key_id: str, body: s.Claim, db: Session = DB):
+        command_actor(db, body.actor, {"PM"})
+        row = get(db, m.MemberKey, key_id)
+        if row.member_id != member_id:
+            raise HTTPException(404, "key not found for this member")
+        db.delete(row)
+        db.commit()
+        return {"revoked": True}
+
+    @app.get("/projects")
+    def list_projects(db: Session = DB):
+        rows = db.scalars(select(m.Project).order_by(m.Project.key)).all()
+        principal = db.info.get("principal")
+        if principal and principal["role"] != "PM":
+            linked = set(db.scalars(select(m.ProjectTeam.project_id).where(
+                m.ProjectTeam.team_id == principal["team_id"]
+            )).all())
+            rows = [row for row in rows if row.team_id == principal["team_id"] or row.id in linked]
+        return [dict(dump(row), team_ids=list(db.scalars(select(m.ProjectTeam.team_id).where(
+            m.ProjectTeam.project_id == row.id
+        )).all())) for row in rows]
+
+    @app.post("/projects", status_code=201)
+    def create_project(body: s.ProjectCreate, db: Session = DB):
+        command_actor(db, body.actor, {"PM"})
+        for team_id in set(body.team_ids) | {body.team_id}:
+            get(db, m.Team, team_id)
+        row = m.Project(team_id=body.team_id, key=body.key, name=body.name)
+        db.add(row)
+        db.flush()
+        for team_id in set(body.team_ids) | {body.team_id}:
+            db.add(m.ProjectTeam(project_id=row.id, team_id=team_id))
+        emit(db, row.id, body.actor, "PROJECT_CREATED", body.name)
+        db.commit()
+        return dump(row)
+
+    @app.post("/projects/{project_id}/items", status_code=201)
+    def create_item(project_id: str, body: s.WorkItemCreate, db: Session = DB):
+        project = project_access(db, project_id, body.actor)
+        principal = command_actor(db, body.actor)
+        if body.parent_id and get(db, m.WorkItem, body.parent_id).project_id != project_id:
+            raise HTTPException(422, "parent must belong to this project")
+        team_id = body.team_id or project.team_id
+        linked = db.scalar(select(m.ProjectTeam.id).where(
+            m.ProjectTeam.project_id == project_id, m.ProjectTeam.team_id == team_id
+        ))
+        if team_id != project.team_id and not linked:
+            raise HTTPException(422, "item team must participate in this project")
+        if principal["role"] != "PM" and team_id != principal["team_id"]:
+            raise HTTPException(403, "create work for your own team")
+        row = m.WorkItem(project_id=project_id, key=body.key, kind=body.kind,
+                         title=body.title, parent_id=body.parent_id)
+        db.add(row)
+        db.flush()
+        db.add(m.WorkDetails(work_item_id=row.id, team_id=team_id, description=body.description,
+                             priority=body.priority, labels=body.labels))
+        emit(db, project_id, body.actor, "WORK_ITEM_CREATED", body.title, row.id)
+        db.commit()
+        return item_view(db, row)
+
+    @app.get("/items/{item_id}")
+    def read_item(item_id: str, db: Session = DB):
+        return item_view(db, locked_item(db, item_id))
+
+    @app.patch("/items/{item_id}")
+    def edit_item(item_id: str, body: s.WorkItemUpdate, db: Session = DB):
+        row = locked_item(db, item_id, body.actor)
+        author = command_actor(db, body.actor)
+        if row.owner_actor and row.owner_actor != body.actor and author["role"] != "PM":
+            raise HTTPException(403, "only owner or PM may edit this item")
+        before = item_view(db, row)
+        detail = details(db, row)
+        for key, value in body.model_dump(exclude={"actor"}, exclude_none=True).items():
+            setattr(row if key == "title" else detail, key, value)
+        emit(db, row.project_id, body.actor, "WORK_ITEM_UPDATED", row.title, row.id,
+             payload={"before": {key: before[key] for key in body.model_fields_set if key != "actor"},
+                      "after": body.model_dump(exclude={"actor"}, exclude_none=True)})
+        db.commit()
+        return item_view(db, row)
+
+    @app.post("/items/{item_id}/claim")
+    def claim(item_id: str, body: s.Claim, db: Session = DB):
+        row = locked_item(db, item_id, body.actor)
+        actor = command_actor(db, body.actor)
+        detail = details(db, row)
+        if actor["role"] != "PM" and detail.team_id not in {None, actor["team_id"]}:
+            raise HTTPException(403, "this item belongs to another team")
+        if row.owner_actor and row.owner_actor != body.actor:
+            raise HTTPException(409, "work is already claimed by " + row.owner_actor)
+        if row.status in {"VERIFIED", "CLOSED"}:
+            raise HTTPException(409, "create a new delivery version to reopen this item")
+        row.owner_actor, row.status = body.actor, "CLAIMED"
+        emit(db, row.project_id, body.actor, "WORK_CLAIMED", "認領工作", row.id)
+        db.commit()
+        return item_view(db, row)
+
+    @app.post("/items/{item_id}/progress")
+    def progress(item_id: str, body: s.ProgressUpdate, db: Session = DB):
+        row = locked_item(db, item_id, body.actor)
+        if row.owner_actor != body.actor:
+            raise HTTPException(403, "claim this item before reporting progress")
+        if row.status in {"VERIFIED", "CLOSED"}:
+            raise HTTPException(409, "create a new delivery version before changing completed work")
+        if body.status:
+            row.status = body.status
+        if body.progress_percent is not None:
+            details(db, row).progress_percent = body.progress_percent
+        emit(db, row.project_id, body.actor, "PROGRESS_REPORTED", body.message, row.id,
+             row.current_version_id, dict(body.payload, status=row.status,
+                                          progress_percent=body.progress_percent))
+        db.commit()
+        return item_view(db, row)
+
+    @app.post("/items/{item_id}/dependencies", status_code=201)
+    def dependency(item_id: str, body: s.DependencyCreate, db: Session = DB):
+        # Serialize graph edits per project: disjoint edges can jointly form a cycle.
+        item = get(db, m.WorkItem, item_id)
+        project_access(db, item.project_id, body.actor)
+        db.scalar(select(m.Project).where(m.Project.id == item.project_id).with_for_update())
+        row = locked_item(db, item_id, body.actor)
+        other = locked_item(db, body.depends_on_id, body.actor)
+        if other.project_id != row.project_id:
+            raise HTTPException(422, "dependencies must belong to the same shared project")
+        edges = db.scalars(select(m.WorkDependency)).all()
+        graph = {}
+        for edge in edges:
+            graph.setdefault(edge.item_id, []).append(edge.depends_on_id)
+        pending, seen = [other.id], set()
+        while pending:
+            key = pending.pop()
+            if key == row.id:
+                raise HTTPException(409, "dependency would create a cycle")
+            if key not in seen:
+                seen.add(key)
+                pending.extend(graph.get(key, []))
+        edge = m.WorkDependency(item_id=row.id, depends_on_id=other.id)
+        db.add(edge)
+        emit(db, row.project_id, body.actor, "DEPENDENCY_ADDED", other.key, row.id,
+             payload={"depends_on_id": other.id})
+        db.commit()
+        return dump(edge)
+
+    @app.post("/items/{item_id}/versions", status_code=201)
+    def version(item_id: str, body: s.VersionCreate, db: Session = DB):
+        row = locked_item(db, item_id, body.actor)
+        author = command_actor(db, body.actor)
+        if row.owner_actor != body.actor and author["role"] != "PM":
+            raise HTTPException(403, "claim this item before creating a version")
+        ordinal = (db.scalar(select(m.WorkVersion.ordinal).where(
+            m.WorkVersion.work_item_id == item_id
+        ).order_by(m.WorkVersion.ordinal.desc()).limit(1)) or 0) + 1
+        result = m.WorkVersion(work_item_id=row.id, ordinal=ordinal, created_by=body.actor,
+                               **body.model_dump(exclude={"actor"}))
+        db.add(result)
+        db.flush()
+        row.current_version_id, row.status = result.id, "WORKING"
+        details(db, row).progress_percent = 0
+        emit(db, row.project_id, body.actor, "VERSION_CREATED", body.change_note, row.id,
+             result.id, {"ordinal": ordinal, "source_ref": body.source_ref})
+        db.commit()
+        return dump(result)
+
+    @app.post("/versions/{version_id}/gates", status_code=201)
+    def gate(version_id: str, body: s.GateCreate, db: Session = DB):
+        version = get(db, m.WorkVersion, version_id)
+        row = locked_item(db, version.work_item_id, body.actor)
+        db.refresh(version)  # A concurrent reviewer may have finalized it while we waited.
+        command_actor(db, body.actor, {"PM", "REVIEWER"})
+        if version.state in {"VERIFIED", "FAILED"}:
+            raise HTTPException(409, "declare gates on a new version")
+        result = m.ValidationGate(work_version_id=version.id, name=body.name, required=body.required)
+        db.add(result)
+        emit(db, row.project_id, body.actor, "GATE_DECLARED", body.name, row.id, version.id)
+        db.commit()
+        return dump(result)
+
+    @app.post("/gates/{gate_id}/result")
+    def gate_result(gate_id: str, body: s.GateResult, db: Session = DB):
+        gate = get(db, m.ValidationGate, gate_id)
+        version = get(db, m.WorkVersion, gate.work_version_id)
+        row = locked_item(db, version.work_item_id, body.actor)
+        db.refresh(gate)
+        db.refresh(version)
+        command_actor(db, body.actor, {"PM"} if body.status == "WAIVED" else {"PM", "REVIEWER"})
+        if body.actor == version.created_by:
+            raise HTTPException(403, "a delivery must be validated by another member")
+        if gate.status != "PENDING":
+            raise HTTPException(409, "gate results are final; create a successor version for corrections")
+        gate.status, gate.evidence_uri, gate.evidence_sha256 = body.status, body.evidence_uri, body.evidence_sha256
+        gate.checked_by, gate.checked_at = body.actor, m.now()
+        db.flush()
+        required = db.scalars(select(m.ValidationGate).where(
+            m.ValidationGate.work_version_id == version.id, m.ValidationGate.required.is_(True)
+        )).all()
+        failed = any(value.status == "FAILED" for value in required)
+        passed = bool(required) and all(value.status in {"PASSED", "WAIVED"} for value in required)
+        version.state = "FAILED" if failed else "VERIFIED" if passed else "VALIDATING"
+        if row.current_version_id == version.id:
+            row.status = "BLOCKED" if failed else "VERIFIED" if passed else "VALIDATING"
+        emit(db, row.project_id, body.actor, "GATE_RESULT", body.message, row.id, version.id,
+             {"gate": gate.name, "status": body.status, "evidence_uri": body.evidence_uri,
+              "evidence_sha256": body.evidence_sha256, "version_state": version.state})
+        db.commit()
+        return dump(gate)
+
+    @app.post("/items/{item_id}/close")
+    def close(item_id: str, body: s.Claim, db: Session = DB):
+        row = locked_item(db, item_id, body.actor)
+        command_actor(db, body.actor, {"PM"})
+        if row.status != "VERIFIED":
+            raise HTTPException(409, "current delivery must be verified before closure")
+        for dep in db.scalars(select(m.WorkDependency).where(m.WorkDependency.item_id == item_id)):
+            if get(db, m.WorkItem, dep.depends_on_id).status not in {"VERIFIED", "CLOSED"}:
+                raise HTTPException(409, "a dependency is not verified")
+        row.status = "CLOSED"
+        emit(db, row.project_id, body.actor, "WORK_CLOSED", "結案", row.id, row.current_version_id)
+        db.commit()
+        return item_view(db, row)
+
+    @app.post("/projects/{project_id}/overview", status_code=201)
+    def overview(project_id: str, body: s.OverviewUpdate, db: Session = DB):
+        project_access(db, project_id, body.actor)
+        command_actor(db, body.actor, {"PM"})
+        row = m.ProjectOverviewRevision(project_id=project_id, body_markdown=body.body_markdown,
+                                         updated_by=body.actor)
+        db.add(row)
+        emit(db, project_id, body.actor, "OVERVIEW_REVISED", body.body_markdown)
+        db.commit()
+        return dump(row)
+
+    @app.post("/projects/{project_id}/pm-summaries", status_code=201)
+    def summary(project_id: str, body: s.PMSummaryCreate, db: Session = DB):
+        project_access(db, project_id, body.actor)
+        command_actor(db, body.actor, {"PM"})
+        row = m.PMSummaryEntry(project_id=project_id, author=body.actor,
+                              body_markdown=body.body_markdown, evidence_refs=body.evidence_refs)
+        db.add(row)
+        emit(db, project_id, body.actor, "PM_SUMMARY_APPENDED", body.body_markdown,
+             payload={"evidence_refs": body.evidence_refs})
+        db.commit()
+        return dump(row)
+
+    @app.get("/projects/{project_id}/history")
+    def history(project_id: str, db: Session = DB):
+        project_access(db, project_id)
+        return dump(db.scalars(select(m.AuditEvent).where(
+            m.AuditEvent.project_id == project_id
+        ).order_by(m.AuditEvent.created_at, m.AuditEvent.id)).all())
+
+    @app.get("/items/{item_id}/history")
+    def item_history(item_id: str, db: Session = DB):
+        row = locked_item(db, item_id)
+        versions = db.scalars(select(m.WorkVersion).where(
+            m.WorkVersion.work_item_id == item_id
+        ).order_by(m.WorkVersion.ordinal)).all()
+        return {
+            "item": item_view(db, row), "versions": dump(versions),
+            "gates": {value.id: dump(db.scalars(select(m.ValidationGate).where(
+                m.ValidationGate.work_version_id == value.id)).all()) for value in versions},
+            "events": dump(db.scalars(select(m.AuditEvent).where(
+                m.AuditEvent.work_item_id == item_id
+            ).order_by(m.AuditEvent.created_at, m.AuditEvent.id)).all()),
+        }
+
+    @app.post("/projects/{project_id}/artifacts", status_code=201)
+    def artifact(project_id: str, body: s.ArtifactCreate, db: Session = DB):
+        project_access(db, project_id, body.actor)
+        path = str(PurePosixPath(body.path.replace("\\", "/")))
+        if not path.startswith("/") or ".." in PurePosixPath(path).parts:
+            raise HTTPException(422, "use a normalized absolute path")
+        db_file = path.lower().endswith((".sqlite", ".sqlite3", ".db")) or "sqlite" in body.media_type
+        components = PurePosixPath(path).parts
+        if db_file and any(value == "reports" or value.lower().startswith("frozen") for value in components):
+            raise HTTPException(422, "database copies must be registered outside reports/frozen packages")
+        row = m.Artifact(project_id=project_id, owner_actor=body.actor,
+                         retention_state=body.purpose, path=path,
+                         **body.model_dump(exclude={"actor", "path"}))
+        db.add(row)
+        emit(db, project_id, body.actor, "ARTIFACT_REGISTERED", path,
+             payload={"sha256": body.sha256, "bytes": body.bytes, "purpose": body.purpose})
+        db.commit()
+        return dump(row)
+
+    @app.post("/artifacts/{artifact_id}/references", status_code=201)
+    def artifact_ref(artifact_id: str, body: s.ArtifactReferenceCreate, db: Session = DB):
+        row = locked_artifact(db, artifact_id, body.actor)
+        if row.retention_state == "DELETED":
+            raise HTTPException(409, "a deleted artifact cannot receive new references")
+        cls = {"VERSION": m.WorkVersion, "GATE": m.ValidationGate, "SUMMARY": m.PMSummaryEntry}[body.ref_kind]
+        target = get(db, cls, body.ref_id)
+        if body.ref_kind == "GATE":
+            target = get(db, m.WorkVersion, target.work_version_id)
+        target_project = target.project_id if body.ref_kind == "SUMMARY" else get(
+            db, m.WorkItem, target.work_item_id
+        ).project_id
+        if target_project != row.project_id:
+            raise HTTPException(422, "artifact and reference must share a project")
+        ref = m.ArtifactReference(artifact_id=row.id, ref_kind=body.ref_kind, ref_id=body.ref_id)
+        db.add(ref)
+        emit(db, row.project_id, body.actor, "ARTIFACT_REFERENCED", row.path,
+             payload={"ref_kind": body.ref_kind, "ref_id": body.ref_id})
+        db.commit()
+        return dump(ref)
+
+    @app.get("/artifacts/{artifact_id}/deletion-check")
+    def check_delete(artifact_id: str, db: Session = DB):
+        row = get(db, m.Artifact, artifact_id)
+        project_access(db, row.project_id)
+        return deletion_check(db, row)
+
+    @app.post("/artifacts/{artifact_id}/deleted")
+    def mark_deleted(artifact_id: str, body: s.ArtifactDeleted, db: Session = DB):
+        row = locked_artifact(db, artifact_id, body.actor)
+        command_actor(db, body.actor, {"PM"})
+        if not deletion_check(db, row)["allowed"]:
+            raise HTTPException(409, "artifact is protected or referenced")
+        row.retention_state = "DELETED"
+        emit(db, row.project_id, body.actor, "ARTIFACT_DELETION_REPORTED", body.message,
+             payload={"path": row.path, "sha256": row.sha256, "bytes": row.bytes})
+        db.commit()
+        return dump(row)
+
+    @app.get("/dashboard-templates")
+    def templates(db: Session = DB):
+        principal = db.info.get("principal")
+        rows = db.scalars(select(m.DashboardTemplate).order_by(m.DashboardTemplate.created_at)).all()
+        output = []
+        for row in rows:
+            if principal and principal["role"] != "PM":
+                if row.team_id and row.team_id != principal["team_id"]:
+                    continue
+                if row.project_id:
+                    try:
+                        project_access(db, row.project_id)
+                    except HTTPException:
+                        continue
+            output.append(dict(dump(row), revisions=dump(db.scalars(select(
+                m.DashboardTemplateRevision
+            ).where(m.DashboardTemplateRevision.template_id == row.id).order_by(
+                m.DashboardTemplateRevision.ordinal
+            )).all())))
+        return output
+
+    @app.post("/dashboard-templates", status_code=201)
+    def template_create(body: s.DashboardTemplateCreate, db: Session = DB):
+        command_actor(db, body.actor, {"PM"})
+        if body.team_id:
+            get(db, m.Team, body.team_id)
+        if body.project_id:
+            project_access(db, body.project_id, body.actor)
+        row = m.DashboardTemplate(**body.model_dump(exclude={"actor", "layout"}), created_by=body.actor)
+        db.add(row)
+        db.flush()
+        rev = m.DashboardTemplateRevision(template_id=row.id, ordinal=1,
+                                           layout=body.layout.model_dump(), created_by=body.actor)
+        db.add(rev)
+        db.flush()
+        row.current_revision_id = rev.id
+        db.commit()
+        return dict(dump(row), revision=dump(rev))
+
+    @app.post("/dashboard-templates/{template_id}/revisions", status_code=201)
+    def template_revision(template_id: str, body: s.DashboardTemplateRevisionCreate, db: Session = DB):
+        command_actor(db, body.actor, {"PM"})
+        row = db.scalar(select(m.DashboardTemplate).where(
+            m.DashboardTemplate.id == template_id
+        ).with_for_update())
+        if not row:
+            raise HTTPException(404, "template not found")
+        ordinal = (db.scalar(select(m.DashboardTemplateRevision.ordinal).where(
+            m.DashboardTemplateRevision.template_id == template_id
+        ).order_by(m.DashboardTemplateRevision.ordinal.desc()).limit(1)) or 0) + 1
+        rev = m.DashboardTemplateRevision(template_id=row.id, ordinal=ordinal,
+                                           layout=body.layout.model_dump(), created_by=body.actor)
+        db.add(rev)
+        db.flush()
+        row.current_revision_id = rev.id
+        db.commit()
+        return dump(rev)
+
+    @app.get("/workspace")
+    def workspace(project_id: str | None = None, db: Session = DB):
+        projects = list_projects(db)
+        ids = [value["id"] for value in projects]
+        if project_id:
+            project_access(db, project_id)
+            ids = [project_id]
+        items = db.scalars(select(m.WorkItem).where(m.WorkItem.project_id.in_(ids)).order_by(
+            m.WorkItem.created_at, m.WorkItem.key
+        )).all()
+        return {
+            "projects": [value for value in projects if value["id"] in ids],
+            "teams": list_teams(db), "members": list_members(db),
+            "items": [item_view(db, row) for row in items],
+            "events": dump(db.scalars(select(m.AuditEvent).where(
+                m.AuditEvent.project_id.in_(ids)
+            ).order_by(m.AuditEvent.created_at.desc()).limit(200)).all()),
+            "summaries": dump(db.scalars(select(m.PMSummaryEntry).where(
+                m.PMSummaryEntry.project_id.in_(ids)
+            ).order_by(m.PMSummaryEntry.created_at.desc())).all()),
+            "overviews": dump(db.scalars(select(m.ProjectOverviewRevision).where(
+                m.ProjectOverviewRevision.project_id.in_(ids)
+            ).order_by(m.ProjectOverviewRevision.created_at.desc())).all()),
+            "artifacts": [dict(dump(row), deletion_check=deletion_check(db, row)) for row in db.scalars(
+                select(m.Artifact).where(m.Artifact.project_id.in_(ids))
+            ).all()],
+            "default_layout": DEFAULT_LAYOUT,
+        }
+
+    @app.get("/dashboard")
+    @app.get("/")
+    def dashboard():
+        return FileResponse(STATIC / "index.html")
+
+    app.mount("/static", StaticFiles(directory=STATIC), name="static")
+    return app
 
 
-@app.get("/dashboard", response_class=HTMLResponse)
-def dashboard(db: Session = Depends(db_session)) -> str:
-    projects = db.scalars(select(Project).order_by(Project.key)).all()
-    rows = []
-    for project in projects:
-        items = db.scalars(select(WorkItem).where(WorkItem.project_id == project.id)).all()
-        blocked = sum(1 for item in items if item.status in {"BLOCKED", "HOLD", "FAILED"})
-        verified = sum(1 for item in items if item.status == "VERIFIED")
-        rows.append(f"<tr><td>{project.key}</td><td>{project.name}</td><td>{len(items)}</td><td>{verified}</td><td>{blocked}</td><td><a href='/projects/{project.id}/history'>history</a></td></tr>")
-    body = "".join(rows) or "<tr><td colspan='6'>No projects yet</td></tr>"
-    return f'''<!doctype html><html><head><title>COAGENTS Dashboard</title>
-<style>body{{font-family:system-ui;margin:2rem;background:#10151f;color:#e8edf5}} table{{border-collapse:collapse;width:100%;background:#192231}}td,th{{padding:.7rem;border-bottom:1px solid #344155;text-align:left}}th{{color:#90caf9}}a{{color:#80cbc4}}.note{{color:#aab8c8}}</style>
-</head><body><h1>COAGENTS</h1><p class='note'>Project control dashboard — current state links to immutable history.</p>
-<table><thead><tr><th>Key</th><th>Project</th><th>Items</th><th>Verified</th><th>Blocked/Hold</th><th>Timeline</th></tr></thead><tbody>{body}</tbody></table>
-<p class='note'>Templates are API-managed and revisioned at <code>/dashboard-templates</code>. This initial view intentionally remains read-only.</p>
-</body></html>'''
-
-
-@app.get("/items/{item_id}/history")
-def item_history(item_id: str, db: Session = Depends(db_session)) -> dict:
-    item = require_item(db, item_id)
-    versions = db.scalars(select(WorkVersion).where(WorkVersion.work_item_id == item_id).order_by(WorkVersion.ordinal)).all()
-    events = db.scalars(select(AuditEvent).where(AuditEvent.work_item_id == item_id).order_by(AuditEvent.created_at)).all()
-    gates = {v.id: db.scalars(select(ValidationGate).where(ValidationGate.work_version_id == v.id)).all() for v in versions}
-    return {"item": dump(item), "versions": dump(versions), "gates": {key: dump(value) for key, value in gates.items()}, "events": dump(events)}
+app = create_app()

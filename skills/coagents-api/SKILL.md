@@ -1,58 +1,54 @@
 ---
 name: coagents-api
-description: Manage COAGENTS projects, subprojects, delivery versions, validation gates, progress, artifacts, and PM summaries through its guarded API or MCP. Use when an agent needs to claim work, report progress, hand off a delivery, or inspect project history; do not use it to execute product deployments.
+description: Use the standalone COAGENTS service to create and expand projects, claim tasks, report progress, deliver versions, validate evidence, read histories, register file paths, and maintain PM summaries or Dashboard templates through REST or MCP.
 ---
 
-# COAGENTS API Skill
+# COAGENTS
 
-COAGENTS is the project-control source of truth. Use MCP when available; use REST only when MCP
-is not configured. Never write directly to its PostgreSQL database.
+One service provides SQL-backed project control, a human Dashboard and Agent MCP.
+Use MCP when configured. Use REST when integrating scripts. Never edit the control database.
 
-## Model
+Read the repository's [API tutorial](../../docs/API.md) for request fields, permissions and errors.
+Read [Template contract](../../docs/DASHBOARD_TEMPLATES.md) when making or editing a view.
+If installed independently of the repository, use the published
+[API tutorial](https://github.com/yangjan-creator/COAGENTS/blob/main/docs/API.md) and
+[Template contract](https://github.com/yangjan-creator/COAGENTS/blob/main/docs/DASHBOARD_TEMPLATES.md).
 
-- `WorkItem`: a subproject, feature, or task.
-- `WorkVersion`: immutable delivery revision (`v1`, `v2`, ...), not a Git branch.
-- Git SHA, PR, or frozen manifest: linked through `source_ref` and `source_sha256`.
-- `ValidationGate`: only gates can make a version `VERIFIED`.
-- Audit events, overview revisions, and PM summaries are append-only history.
+## Identity and permissions
 
-## Normal agent flow
+Use the configured `COAGENTS_ACTOR` and its `COAGENTS_API_TOKEN`. Token and actor must match.
+CONTRIBUTOR owns work; REVIEWER records independent gates; PM manages decisions and closure.
+For a new actor, a PM must register the member and issue its own key first.
 
-1. Read item history and current version.
-2. Claim before work.
-3. Append progress or `BLOCKED` with a concrete reason.
-4. Make a new delivery version; never overwrite vN.
-5. Declare gates, then record results with evidence URI plus full SHA-256.
-6. Register large artifacts by locator/SHA/bytes; never copy databases into reports.
-7. Use PM Summary only for decisions that integrate several facts.
+## Work lifecycle
 
-## MCP examples
+1. Read `workspace` or `item_history`.
+2. Create a SUBPROJECT/FEATURE/TASK under a project or parent, then claim it.
+3. Report progress with the concrete result, next step and blocker. Another member's claim cannot
+   be overwritten; progress cannot grant VERIFIED.
+4. Deliver a new vN with change note and Git commit/PR/artifact reference. Never reuse an old version.
+5. A separate reviewer declares and runs gates for that version, citing evidence path + full SHA.
+   No declared gates is not a pass. FAILED is preserved; repairs receive a new version.
+6. A PM may close a verified version only when its dependencies are verified.
+7. Append a PM Summary when integrating facts into a decision; save overview revisions for the
+   current overall plan. All older records remain readable.
 
-```text
-claim_work_item(item_id="…", actor="yu-agent")
-report_progress(item_id="…", actor="yu-agent", status="WORKING", message="Started v2 extraction")
-create_delivery_version(item_id="…", actor="yu-agent", change_note="Fix source binding", source_ref="git:…", source_sha256="<64 hex>")
-project_history(project_id="…")
-```
+## File registry
 
-## REST examples
+Register `path, sha256, bytes, owner, purpose`; the service stores metadata, never large copies.
+Link assets to versions/gates/summaries for reverse traceability. A path is a locator, not identity.
+Protected input/rollback or referenced files cannot receive a deletion attestation.
+`artifact_deletion_check` examines registry references only: inspect processes, mounts and retention
+requirements separately before touching the real file. The server never physically deletes it.
 
-```bash
-curl -X POST "$COAGENTS_URL/items/$ITEM_ID/claim" \
-  -H 'content-type: application/json' -d '{"actor":"yu-agent"}'
+## Templates
 
-curl -X POST "$COAGENTS_URL/gates/$GATE_ID/result" \
-  -H 'content-type: application/json' \
-  -d '{"actor":"review-agent","status":"PASSED","message":"replay passed","evidence_uri":"/mnt/d/evidence/run.json","evidence_sha256":"<64-hex>"}'
-```
-
-## Artifact safety
-
-Call `GET /artifacts/{id}/deletion-check` before cleanup. `UNIQUE_INPUT` and `ROLLBACK_POINT`
-are never removable. A path is not identity: record full SHA-256 and bytes. The first release
-records deletion permission but does not physically delete files.
+Templates render directly in the Dashboard. Use the typed widget/query pairs from the contract.
+Editing creates a new template revision; don't imply that a stored JSON layout is verified
+until its actual view has been opened.
 
 ## Boundaries
 
-COAGENTS does not prove runtime behavior, deploy code, or replace Git review. It records who
-claims work, what version is under review, evidence that exists, and whether declared gates close.
+No external PM installation or Connector is required. COAGENTS records Git identities and
+evidence attestations, but does not prove runtime facts, host Git or execute deployments.
+Report a 401/403/409/422 with its actual reason; don't retry as another actor or claim success.

@@ -1,36 +1,49 @@
 # COAGENTS architecture
 
-## Agent-first route
-
 ```text
-Agent (MCP) -> guarded REST API -> PostgreSQL control plane
-                              -> append-only events / versions / gates / artifacts
-                              -> optional outbound adapter or webhook
+Human Dashboard ─┐
+                 ├─ COAGENTS REST API ─ PostgreSQL
+Agent MCP ───────┘                     ├─ teams / members / project_teams
+                                      ├─ work_items / details / dependencies
+                                      ├─ versions / validation_gates
+                                      ├─ audit_events / overviews / pm_summaries
+                                      ├─ artifacts / references
+                                      └─ dashboard_templates / revisions
 ```
 
-The primary route is MCP to the COAGENTS API. The API owns claims, versions, gate state, and
-artifact retention. It’s a Plan, Plane, and Vikunja are secondary integrations; they may mirror
-status but cannot independently mark a version verified.
+One deployable service implements planning, task management, agent collaboration and reporting.
+It's a Plan, Plane and Vikunja informed the capability selection; no external instance or vendor
+database is used.
 
-## Truth boundaries
+## Authority
 
-| Concern | Truth source |
-|---|---|
-| Code version | Git commit/tag/PR, linked by `source_ref` |
-| Work ownership, status, version, gate | COAGENTS PostgreSQL |
-| Validation evidence | immutable artifact reference + gate result |
-| PM interpretation | append-only PM Summary Log |
-| External board display | adapter cache only |
+Git owns code history; a WorkVersion links to its commit, PR or delivery path and full SHA.
+COAGENTS owns task claims, active delivery, validation state, decisions and file references.
+It stores artifact locators and attestations, not artifact bytes.
 
-## Two-team operation
+## Collaboration and permissions
 
-Teams such as `yu` and `si` receive separate Team records. A project belongs to one owning team.
-A shared initiative becomes a coordination project with work items owned by either team.
+A project has an owning team plus participating teams. Each work item has an execution team.
+Members have HUMAN/AGENT kind and CONTRIBUTOR/REVIEWER/PM role. An API key resolves to one member;
+the body actor must match. Contributors can read participating projects and claim their team's
+work. Reviewers declare gates and record results. PMs manage teams, overviews, summaries and closure.
+No member can validate its own delivery. The administrator uses the reserved actor `pm`.
 
-## Version and verification invariant
+## Invariants
 
-1. A new delivery creates `WorkVersion(ordinal=n+1)`; prior rows remain immutable.
-2. Gates belong to one version, never an unversioned task.
-3. Required gates must be `PASSED` or reasoned `WAIVED` before that version becomes `VERIFIED`.
-4. A `FAILED` gate blocks the version; a repair becomes a new version.
-5. All state transitions emit an `AuditEvent`.
+- A work-item row lock serializes claims and delivery ordinals on PostgreSQL.
+- vN remains readable when v(N+1) becomes active.
+- Each gate records one terminal result, evidence URI, full SHA and checker identity.
+- All required gates must pass or receive a reasoned PM waiver. Zero gates never verify.
+- A result for an older version changes only that version.
+- Closing requires the active version and declared dependencies to be verified.
+- Dashboard templates are validated layouts, and each edit creates a new revision.
+- File deletion checks are conservative registry checks, never physical deletion authorization
+  based on filesystem/process inspection.
+
+## Schema compatibility
+
+v0.2 adds separate tables rather than changing v0.1 columns. Startup uses SQLAlchemy create_all
+for a new database or those additive tables. Existing v0.1 records remain available, but owners
+must register their actor identities before issuing new commands. SQL migration versioning is
+still future work; create_all is not a general migration engine.

@@ -1,11 +1,16 @@
-# Contributing to COAGENTS
+# Contributing
 
-1. Do not add an adapter that reads or writes an upstream product's database directly.
-2. New agent write actions must create an append-only `AuditEvent`.
-3. New work states must specify whether they can lead to `VERIFIED`, and which gate closes them.
-4. New artifact behavior must preserve the no-copy registry model and a deletion check.
-5. New Dashboard widgets require a declared data query and a fail-closed unknown-widget behavior.
-6. Run the API smoke tests and preserve API compatibility unless the change is versioned.
+COAGENTS is one native service. Keep the dashboard, REST API and MCP on the same data model.
+Do not add a dependency on installing another project manager.
 
-Use Apache-2.0-compatible contributions. Do not copy source code from AGPL upstream tools into this
-repository; API adapters are intentionally separate from upstream implementations.
+- Add history events for every work-state change.
+- Attach verification to a delivery version and preserve old versions and results.
+- Test invalid actions as well as a successful workflow.
+- Preserve actor/team boundaries and full evidence hashes.
+- Keep file storage as an artifact registry; never copy large data into reports.
+- Extend Widget schema and renderer together; unknown layouts must be rejected.
+- Keep browser content escaped; template JSON must never execute code.
+
+Run `pytest -q` and `node --check src/apc/static/app.js`.
+Use Apache-2.0-compatible contributions; do not copy code from other projects without resolving
+their license requirements.

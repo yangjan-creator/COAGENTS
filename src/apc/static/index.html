@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>COAGENTS · 專案工作台</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="/dashboard"><span class="brandmark">co</span>COAGENTS</a>
+    <p class="eyebrow">共同工作空間</p>
+    <nav aria-label="主要功能">
+      <button data-view="overview" class="active"><span>◈</span>專案總覽</button>
+      <button data-view="board"><span>▥</span>工作看板</button>
+      <button data-view="versions"><span>⌘</span>版本與驗證</button>
+      <button data-view="assets"><span>▤</span>檔案與資料資產</button>
+      <button data-view="timeline"><span>↳</span>完整歷程</button>
+      <button data-view="templates"><span>▧</span>Dashboard 模板</button>
+      <button data-view="members"><span>◎</span>團隊與 Agent</button>
+    </nav>
+    <div class="sidebar-bottom">
+      <a href="/docs" target="_blank" rel="noopener">REST / OpenAPI ↗</a>
+      <button id="connect">連線與身分</button>
+      <small>單一服務 · 單一份紀錄<br>COAGENTS / v0.2</small>
+    </div>
+  </aside>
+  <main>
+    <header class="topbar">
+      <span class="breadcrumb">工作台 <span>/</span> <strong id="view-label">專案總覽</strong></span>
+      <div class="identity"><span class="dot"></span><label for="actor">操作身分</label><select id="actor"><option value="pm">PM 管理員</option></select></div>
+    </header>
+    <section class="pageheading">
+      <div><p class="eyebrow">PROJECT CONTROL</p><h1 id="heading">一起推進，每一步都有紀錄。</h1><p id="subheading">從任務到交付、驗證與證據，沿著同一條歷程追蹤。</p></div>
+      <button id="new-project" class="primary">＋ 新增專案</button>
+    </section>
+    <section class="filters" aria-label="篩選">
+      <label>專案<select id="project"><option value="">全部專案</option></select></label>
+      <label>團隊<select id="team"><option value="">所有團隊</option></select></label>
+      <label class="searchlabel">搜尋<input id="search" placeholder="項目、負責人或標籤…" type="search"></label>
+      <button id="refresh">更新</button>
+      <button id="new-item" class="primary">＋ 開展工作項目</button>
+    </section>
+    <div id="error" role="alert" hidden></div>
+    <section id="content" aria-live="polite"><p class="empty">正在讀取專案…</p></section>
+  </main>
+  <dialog id="editor"><form id="editor-form"><header><h2 id="dialog-title"></h2><button type="button" class="icon" id="cancel" aria-label="關閉">×</button></header><div id="dialog-fields"></div><p id="dialog-error" role="alert"></p><footer><button type="button" id="cancel-bottom">取消</button><button type="submit" class="primary">儲存</button></footer></form></dialog>
+  <aside id="drawer" class="drawer" hidden aria-label="項目細節"><button id="close-drawer" class="icon" aria-label="關閉細節">×</button><div id="drawer-content"></div></aside>
+  <div id="toast" role="status" hidden></div>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>

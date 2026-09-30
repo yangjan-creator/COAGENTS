@@ -1,25 +1,18 @@
-# Roadmap
+# Product state
 
-## v0.1 — control-plane foundation (this commit)
+## v0.2: available
 
-- PostgreSQL-first project/subproject/feature/task model.
-- Immutable delivery versions and validation gates.
-- Append-only history, PM summaries, and artifact retention registry.
-- REST/OpenAPI, minimal MCP commands, and read-only human dashboard shell.
-- It’s a Plan, Plane, and Vikunja adapter boundaries with no upstream database access.
+One native service: human dashboard, Agent MCP, shared-team projects, hierarchy, claims,
+progress, dependencies, delivery versions, independent validation, full history, PM decisions,
+file registry and real JSON dashboard-template rendering. API-key identity and role/team
+checks are included. Synthetic demo is opt-in.
 
-## v0.2 — safe multi-agent operation
+## Next
 
-- API keys/OIDC and actor-to-team RBAC.
-- Alembic migrations, authenticated webhooks, adapter mapping UI.
-- Dependency graph and cross-team work ownership.
-- Dashboard-template renderer and role-specific views.
+- Versioned SQL migrations and upgrade/rollback commands.
+- Notifications, scheduled check-ins, assignment handoff and richer dependency visualization.
+- Typed custom task fields, template visual editor and saved historical views.
+- Git-host evidence attachment and CI check ingestion.
+- SSO and more granular project permissions.
 
-## v0.3 — integration and governance
-
-- Version-pinned It’s a Plan connector pilot.
-- Plane/Vikunja connectors behind explicit outbound-sync policy.
-- Gate policies, evidence verification jobs, and release-readiness dashboard.
-- Artifact cleanup receipt/tombstone workflow.
-
-No production integration is enabled until v0.2 authentication/RBAC and v0.3 connector tests pass.
+These are future features. COAGENTS never requires external project-management products.

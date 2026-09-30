@@ -20,8 +20,10 @@ Paths are authoritative only together with their SHA-256: a path is a locator, n
 
 Before deletion, call `GET /artifacts/{id}/deletion-check`. It returns every live reference and
 whether the retention state permits cleanup. Physical deletion is intentionally outside the first
-API release: the agent performs it only after the API reports `allowed=true`, then records the
-tombstone event.
+API release. `allowed=true` means only that the registry has no protection or references;
+the agent must independently inspect actual process handles, jobs, mount points and rollback
+needs before deleting anything. After deletion, a PM records the tombstone with
+`POST /artifacts/{id}/deleted`. The server never deletes a file.
 
 ## Path policy
 

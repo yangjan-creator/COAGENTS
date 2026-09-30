@@ -1,43 +1,52 @@
-# Dashboard templates
+# Custom Dashboard templates
 
-Templates describe a human view of COAGENTS data. They do not alter work-item, version, or gate
-state. Each saved edit creates a new immutable template revision.
+The same service renders templates, stores their revisions, and exposes them through API/MCP.
+A template is global, team-scoped or project-scoped. Open **Dashboard 模板** to create one, then
+select it on **專案總覽**. Editing saves a new version; earlier layouts remain visible.
 
-## Template scope
-
-- **Global**: a standard operating view for every team.
-- **Team**: for example, 羽's data-ingestion view or 思's release queue.
-- **Project**: one project-specific PM overview.
-
-At most one of `team_id` and `project_id` should normally be set. The API leaves global templates
-with both empty.
-
-## Layout JSON v1
+## Layout v1
 
 ```json
 {
-  "title": "羽：入庫控制",
-  "filters": [{"field": "status", "operator": "in", "value": ["WORKING", "BLOCKED", "HOLD"]}],
+  "title": "羽 / 思：共同交付",
+  "statuses": [],
   "widgets": [
-    {"type": "metric", "title": "待驗證版本", "query": "versions.required_gates_pending"},
-    {"type": "table", "title": "阻塞項目", "query": "work_items.blocked", "columns": ["key", "title", "owner_actor", "current_version", "blocker"]},
-    {"type": "timeline", "title": "近 24 小時", "query": "audit_events.recent"},
-    {"type": "artifact-risk", "title": "受保護資料資產", "query": "artifacts.protected"}
+    {"type": "metric", "title": "待驗證格", "query": "pending_gates"},
+    {"type": "board", "title": "共同工作", "query": "items"},
+    {"type": "table", "title": "阻塞項目", "query": "blocked",
+     "columns": ["key", "title", "team", "owner_actor", "version", "validation"]},
+    {"type": "summary", "title": "PM 決策", "query": "summaries"},
+    {"type": "artifacts", "title": "資料路徑與保留狀態", "query": "artifacts"},
+    {"type": "timeline", "title": "最新動作", "query": "events"}
   ]
 }
 ```
 
-The initial API stores this contract and revisions it. The interactive renderer is intentionally
-small in v0.1; it must reject unknown widget types rather than silently rendering an incomplete
-dashboard.
+| Widget | Allowed queries |
+|---|---|
+| metric | items, blocked, verified, pending_gates |
+| table | items, blocked, verified |
+| board | items |
+| summary | summaries |
+| artifacts | artifacts |
+| timeline | events |
 
-## Required human views
+Table columns: `key, title, kind, owner_actor, status, version, progress, team, priority, validation`.
+Order controls widget order. Metrics are grouped into the top strip. `statuses` filters work-item
+widgets; the toolbar adds project/team/search filters. Timeline and summary widgets follow the
+selected project. They remain project-wide when a team/search filter is applied.
 
-Every production project should provide at least:
+Unknown widgets, unknown columns and incompatible type/query pairs fail validation (HTTP 422).
+Templates contain data bindings, never executable JavaScript or SQL. The open static renderer in
+`src/apc/static/app.js` can be extended alongside the API's Widget schema.
 
-1. **PM overview** — active version, gate state, blockers, latest summary, next owner.
-2. **Validation queue** — each version's required gates, evidence URI/SHA, and last checker.
-3. **History** — append-only claim/progress/version/gate/summary events.
-4. **Retention** — large artifacts, paths, size, owner, purpose, live references, deletion status.
+## API
 
-This is where a PM reads the whole project without reconstructing it from scattered RD reports.
+```text
+GET  /dashboard-templates
+POST /dashboard-templates
+POST /dashboard-templates/{id}/revisions
+```
+
+Create body: `actor, name, description?, team_id? OR project_id?, layout`.
+Revision body: `actor, layout`. GET returns every revision and the current revision ID.
