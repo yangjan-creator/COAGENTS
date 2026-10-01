@@ -120,7 +120,7 @@
 <text x="751" y="221" font-size="12" font-weight="400">TX-0骨架待審；worker未接</text>
 <text x="751" y="243" font-size="12" font-weight="400">同tx寫outbox；commit後領取</text>
 </g>
-<g id="SCHED"><rect x="1090" y="110" width="290" height="100" rx="11" fill="#edf1f6" stroke="#68788f" stroke-width="1.5"/>
+<g id="SCHED"><rect x="1090" y="110" width="290" height="100" rx="11" fill="#fff4d6" stroke="#b78313" stroke-width="1.5"/>
 <text x="1106" y="137" font-size="15" font-weight="700">Scheduler</text>
 <text x="1106" y="159" font-size="12" font-weight="400">R02</text>
 <text x="1106" y="181" font-size="12" font-weight="400">謀3 CORE已認領；未接線</text>
