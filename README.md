@@ -101,6 +101,15 @@ The [detailed framework specification](docs/planning/FRAMEWORK_SPEC.md) adds the
 SQL model, authorization matrix, state transitions and reproducible design-consistency checks.
 These are design candidates, not endpoints or tables already available in v0.2.
 
+Development was authorized on 2026-10-01. The current
+[operating model](docs/architecture/OPERATING_MODEL.md) assigns implementation to two developer
+agents and keeps architecture, project control, audit and documentation separate. Historical
+planning snapshots retain their original approval state; they are not the current authorization
+record. Decisions and progress are recorded in the local COAGENTS SQL-backed `CG-PLAN` project.
+Typed project records/context packs and Traditional Chinese/English localization are planned
+requirements, not features already available. This authorization does not authorize production
+deployment or importing real team data.
+
 ## Open source
 
 [Apache-2.0](LICENSE). All implementation here is original code. The three reference products'
