@@ -1,0 +1,47 @@
+%% 作者／責任歸屬：滴。2026-10-01。完整目標架構；不是部署/全案驗收票。
+flowchart LR
+  DASH["Human Dashboard<br/>B01 · B09 · X07<br/>v0.2；中英候選已驗"]:::active
+  MCP["Agent MCP / REST client<br/>B10 · X07<br/>同 API；不直連 SQL"]:::active
+  SSO["SSO / OIDC<br/>R05 · X01<br/>issuer / session；未做"]:::future
+  ONBOARD["羽／思真人接入<br/>R07 · B02<br/>各自案＋共同案；未做"]:::future
+  API["API 身分層<br/>B10；X01/X02 尚待新授權<br/>現有 API key；不信任自報 actor"]:::active
+  AUTH["授權 / Controller / Capability<br/>X01 · X02 · X03<br/>scope＋epoch＋單次能力；未做"]:::future
+  DOMAIN["Domain transaction / receipt<br/>B03–B07 · X06<br/>v0.2 CRUD存在；TX-0 v3待審<br/>claim / delivery / gate / revision"]:::doing
+  KNOW["Records / Context / Registry<br/>X04 · X05<br/>Rule、Memory、欄位、接點；未做"]:::future
+  FILES["Artifact registry / retention<br/>B08 · X08<br/>基線登錄存在；完整保留策略未做"]:::active
+  DB["PostgreSQL（唯一控制權威）<br/>R01 · B02–B08 · X04–X08<br/>现役 v0.2；新schema未部署<br/>revisions / records / history"]:::active
+  MIG["Versioned SQL / UP / DOWN<br/>R01<br/>E1候選已驗；TX-0待審<br/>runtime 不自動升級"]:::doing
+  OUT["Outbox / worker / fenced lease<br/>R02 · R03 · R04 · X06<br/>TX-0骨架待審；worker未接<br/>同tx寫outbox；commit後領取"]:::doing
+  SCHED["Scheduler<br/>R02<br/>謀3 CORE已認領；未接線"]:::doing
+  NOTIFY["Notifier / persistent inbox<br/>R03<br/>將：限定CORE已派，待ACK<br/>read ≠ ACK；整條尚未接通"]:::doing
+  WEBHOOK["Webhook delivery / retry<br/>R04<br/>謀3已認領；R02首件後開"]:::future
+  GIT["GitSync（證據，不自動批准）<br/>R06 · X05<br/>LOCAL_GIT / REST / webhook<br/>計畫已核；實作未開始"]:::future
+  DEPLOY["正式部署 / release<br/>R08<br/>image digest / TLS / secret / rollback"]:::future
+  RESTORE["備份 / restore<br/>R09 · X08<br/>加密備份＋隔離restore；未做"]:::future
+  SOAK["長期運作 / acceptance<br/>R10<br/>真接入、7日／30日；未開始"]:::future
+  DASH -->|"session/key · typed command"| API
+  MCP -->|"member key · REST payload"| API
+  SSO -.->|"verified (issuer,sub) · session"| API
+  API -.->|"principal · action · target · revision"| AUTH
+  AUTH -.->|"allowed scope · epoch · payload digest"| DOMAIN
+  DOMAIN -->|"atomic domain + receipt + event"| DB
+  DOMAIN -->|"committed event_id / outbox_id"| OUT
+  SCHED -->|"occurrence_id · operation_id"| OUT
+  OUT -->|"event_id · recipient · redacted revision"| NOTIFY
+  OUT -->|"delivery_id · endpoint revision"| WEBHOOK
+  AUTH -.->|"recipient scope / epoch 重驗"| NOTIFY
+  AUTH -.->|"endpoint policy / epoch 重驗"| WEBHOOK
+  KNOW -->|"exact source revision / context purpose"| DOMAIN
+  FILES -->|"path · SHA · bytes · hold / references"| DOMAIN
+  GIT -->|"repo_id · objects · PR / CI evidence"| DOMAIN
+  DOMAIN -->|"accepted revision · context blocks"| KNOW
+  MIG -->|"explicit guarded UP/DOWN · checksum"| DB
+  ONBOARD -.->|"real principals · scoped project commands"| API
+  DEPLOY ==>|"pinned release · runtime config"| API
+  DEPLOY ==>|"operator-controlled migration"| MIG
+  DB ==>|"encrypted backup / schema release"| RESTORE
+  RESTORE ==>|"verified restore receipt"| DEPLOY
+  DEPLOY ==>|"served digest · observation start"| SOAK
+  classDef active fill:#e9f6ef,stroke:#248451,color:#163d29
+  classDef doing fill:#fff4d6,stroke:#b78313,color:#654a11
+  classDef future fill:#edf1f6,stroke:#68788f,color:#233044
