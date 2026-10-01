@@ -33,3 +33,4 @@ phase permissions and progress are recorded in the SQL-backed project, not infer
 roadmap or the approval state of an older planning snapshot. Unfinished drafts and accepted
 isolated candidates are not automatically part of the public release or the running service.
 See [control records and development authority](architecture/CONTROL_AUTHORITY.md).
+Current owners, bounded GO and conditional dates: [28-item progress snapshot](planning/OVERALL_PROGRESS_20261001.md).

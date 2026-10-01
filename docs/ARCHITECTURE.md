@@ -1,5 +1,21 @@
 # COAGENTS architecture
 
+## Complete target and implementation status
+
+[Full architecture diagram (SVG)](architecture/COAGENTS_FULL_ARCHITECTURE.svg) ·
+[Mermaid source](architecture/COAGENTS_FULL_ARCHITECTURE.mmd) ·
+[28-item progress and owners](planning/OVERALL_PROGRESS_20261001.md).
+
+COAGENTS is one open-source SQL-backed project-control service for human PMs and AI Agents.
+Agents create, claim and deliver work through REST/MCP; people inspect a Dashboard.
+Claims, versions, gates, decisions and knowledge have traceable history instead of an unindexed
+pile of Markdown reports. Git still owns code history; COAGENTS records exact references.
+The diagram includes the full target, not just today's v0.2. Green means baseline exists;
+yellow means partial/limited DEV or review; gray means not implemented. New ACL, workers,
+SSO, GitSync and release/restore are not asserted operational by drawing an arrow.
+
+## Existing v0.2 baseline
+
 ```text
 Human Dashboard ─┐
                  ├─ COAGENTS REST API ─ PostgreSQL
