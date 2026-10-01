@@ -1,0 +1,55 @@
+{
+  "author": "滴",
+  "kind": "FRAMEWORK_DESIGN_CANDIDATE",
+  "version": 1,
+  "created_at": "2026-10-01T00:47:36.294434+00:00",
+  "baseline_product_commit": "b80435e920bd38b9212c08e1cfc1b7bb7d9591e7",
+  "full_objective_preserved": true,
+  "completion_matrix_ref": "docs/planning/COMPLETION_MATRIX.md",
+  "parent_plan_manifest": {
+    "path": "docs/planning/completion_plan_manifest.json",
+    "sha256": "e5290dc64a3d6f142279baf9ec69fa0f95e96ac5a487120392b5beff9cb4e2ef"
+  },
+  "files": [
+    {
+      "path": "docs/planning/FRAMEWORK_SPEC.md",
+      "sha256": "69616b53071b7814eb0fa4dd3fdf899ca1f23b9f95e9d5af06a8521d8c6f45df",
+      "bytes": 5185
+    },
+    {
+      "path": "docs/planning/API_CONTRACT.md",
+      "sha256": "50807afc9019b285c2f79203c095b0906e06b7006b5a52e328c87cac5ed353f6",
+      "bytes": 44824
+    },
+    {
+      "path": "docs/planning/SQL_MODEL.md",
+      "sha256": "b681d83b9bdc9f368e35ac0f82dd755452a9545d971c7532cf26f121d268e559",
+      "bytes": 23062
+    },
+    {
+      "path": "docs/planning/AUTHORIZATION_MATRIX.md",
+      "sha256": "f47ad570dfa07c49562eb020ad1bdadba34b09b577b4d9166e1770b90a2810bf",
+      "bytes": 10481
+    },
+    {
+      "path": "docs/planning/STATE_MACHINES.md",
+      "sha256": "583d725644198b45c254b1f5f09197b9c3248f19f2014145c3cb3d5f96244f3d",
+      "bytes": 10488
+    },
+    {
+      "path": "docs/planning/FRAMEWORK_SELFCHECK.md",
+      "sha256": "0de6bfba17080af98f3ab80d71edf76a2090ceaa8c6e8d43fcd6aad90fab5597",
+      "bytes": 7686
+    },
+    {
+      "path": "docs/planning/framework_selfcheck.json",
+      "sha256": "c386da539d3a8af35e6049c3c082c72fe04a84deb55b41eee6f7445374360842",
+      "bytes": 3212
+    }
+  ],
+  "state": "DESIGN_CANDIDATE_REVIEW_PENDING",
+  "dev_authorized": false,
+  "runtime_acceptance": false,
+  "independent_review": false,
+  "provider_requests": 0
+}

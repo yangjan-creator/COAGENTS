@@ -97,6 +97,10 @@ acceptance gates, real-team onboarding and production/restore requirements. They
 not implemented features or deployment authority. [v0.2 dogfooding](docs/planning/DOGFOOD_V02.md) records
 what the current service can actually manage; the COAGENTS planning project is `CG-PLAN`.
 
+The [detailed framework specification](docs/planning/FRAMEWORK_SPEC.md) adds the future API contracts,
+SQL model, authorization matrix, state transitions and reproducible design-consistency checks.
+These are design candidates, not endpoints or tables already available in v0.2.
+
 ## Open source
 
 [Apache-2.0](LICENSE). All implementation here is original code. The three reference products'

@@ -25,5 +25,8 @@ scheduling, notifications, webhooks, SSO, SQL upgrade/rollback, automatic Git hi
 real 羽/思 onboarding, production deployment, restore and long-term operation. Project controllers,
 single-use authorization and typed knowledge/code registries are also retained.
 
+The [framework detail index](planning/FRAMEWORK_SPEC.md) links the candidate API, SQL, permission
+and state-machine contracts. Its static self-check is not runtime acceptance or permission to start DEV.
+
 Planning has been dogfooded in the running v0.2. New implementation remains on hold until the user
 approves the plan; unfinished drafts in a developer worktree are not part of the public service.

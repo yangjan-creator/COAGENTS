@@ -33,3 +33,13 @@ API取證不用真LLM；供應商請求0、正式機／VPS／羽球庫寫入0。
 後者在計畫登錄完成後產生；不足或操作失敗不得補造成功收據。
 資料留在COAGENTS的SQL與audit history，MD是可點開的项目文件，不是唯一控制資料。
 本輪新功能DEV停止；待核計畫，不部署新程式碼。
+
+## 框架詳細設計交付（2026-10-01補記）
+
+最新規劃交付為v4，候選詳細規格入口：[FRAMEWORK_SPEC.md](FRAMEWORK_SPEC.md)。
+固定七檔與完整SHA：[framework_spec_manifest.json](framework_spec_manifest.json)；
+實際SQL/API登錄與讀回：[framework_registration.json](framework_registration.json)。
+原v1–v3收據保留，不改寫；產品進度仍0、root HOLD、四個必要Gate PENDING。
+這輪登錄器兩次取錯v0.2欄位：/workspace沒有頂層versions/gates、AuditEvent使用version_id；
+state已提交後以GET-only回讀補驗，沒有為器材失敗再造版本。臨時member key已撤销，具名read-only count=0。
+靜態規格對帳不能宣稱runtime驗收通過；沒有接線產品草稿、migration、build或recreate。

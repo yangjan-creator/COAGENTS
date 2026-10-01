@@ -1,0 +1,120 @@
+{
+  "author": "滴",
+  "kind": "STATIC_DESIGN_CONSISTENCY_ONLY",
+  "measured_at": "2026-10-01T00:46:41.748494+00:00",
+  "root": "/home/sky/projects/agent-project-control",
+  "operation_count": 114,
+  "action_count": 85,
+  "schema_vocabulary_count": 96,
+  "referenced_request_schema_count": 79,
+  "defined_table_count": 81,
+  "errors": {
+    "duplicate_operation_ids": [],
+    "duplicate_method_paths": [],
+    "missing_request_schemas": [],
+    "missing_action_rules": [],
+    "matrix_without_api": [],
+    "missing_sql_tables": []
+  },
+  "negative_controls": [
+    {
+      "control": "REMOVE_ACTION_RULE",
+      "expected_failure_field": "missing_action_rules",
+      "actual_failures": {
+        "missing_action_rules": [
+          "item.write_set.manage"
+        ],
+        "matrix_without_api": [
+          "omitted.write_set"
+        ]
+      },
+      "detected": true
+    },
+    {
+      "control": "REMOVE_REQUEST_SCHEMA",
+      "expected_failure_field": "missing_request_schemas",
+      "actual_failures": {
+        "missing_request_schemas": [
+          "WriteSetCreate"
+        ]
+      },
+      "detected": true
+    },
+    {
+      "control": "REMOVE_SQL_TABLE",
+      "expected_failure_field": "missing_sql_tables",
+      "actual_failures": {
+        "missing_sql_tables": [
+          "gate_waivers"
+        ]
+      },
+      "detected": true
+    },
+    {
+      "control": "DUPLICATE_OPERATION",
+      "expected_failure_field": "duplicate_operation_ids",
+      "actual_failures": {
+        "duplicate_operation_ids": [
+          "item_claim"
+        ],
+        "duplicate_method_paths": [
+          "POST//items/{id}/claim"
+        ]
+      },
+      "detected": true
+    },
+    {
+      "control": "DUPLICATE_ROUTE",
+      "expected_failure_field": "duplicate_method_paths",
+      "actual_failures": {
+        "duplicate_method_paths": [
+          "POST//items/{id}/claim"
+        ]
+      },
+      "detected": true
+    }
+  ],
+  "links_checked": true,
+  "link_failures": [],
+  "files": [
+    {
+      "path": "docs/planning/FRAMEWORK_SPEC.md",
+      "sha256": "69616b53071b7814eb0fa4dd3fdf899ca1f23b9f95e9d5af06a8521d8c6f45df",
+      "bytes": 5185
+    },
+    {
+      "path": "docs/planning/API_CONTRACT.md",
+      "sha256": "50807afc9019b285c2f79203c095b0906e06b7006b5a52e328c87cac5ed353f6",
+      "bytes": 44824
+    },
+    {
+      "path": "docs/planning/SQL_MODEL.md",
+      "sha256": "b681d83b9bdc9f368e35ac0f82dd755452a9545d971c7532cf26f121d268e559",
+      "bytes": 23062
+    },
+    {
+      "path": "docs/planning/AUTHORIZATION_MATRIX.md",
+      "sha256": "f47ad570dfa07c49562eb020ad1bdadba34b09b577b4d9166e1770b90a2810bf",
+      "bytes": 10481
+    },
+    {
+      "path": "docs/planning/STATE_MACHINES.md",
+      "sha256": "583d725644198b45c254b1f5f09197b9c3248f19f2014145c3cb3d5f96244f3d",
+      "bytes": 10488
+    }
+  ],
+  "not_proven": [
+    "OpenAPI compilation",
+    "PostgreSQL DDL and transactions",
+    "permission runtime",
+    "MCP and browser parity",
+    "SSO and external providers",
+    "independent review",
+    "deployment and restoration",
+    "real-team onboarding"
+  ],
+  "provider_requests": 0,
+  "product_code_changed": false,
+  "production_access": false,
+  "dev_authorized": false
+}

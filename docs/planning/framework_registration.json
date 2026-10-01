@@ -1,0 +1,364 @@
+{
+  "author": "滴",
+  "kind": "FRAMEWORK_PLAN_ONLY_DOGFOOD_READBACK",
+  "measured_at": "2026-10-01T00:51:08.632047+00:00",
+  "project_id": "2811d8cd-5dc5-45cd-8914-155bff67e6ff",
+  "project_key": "CG-PLAN",
+  "manifest": {
+    "path": "/home/sky/projects/agent-project-control/docs/planning/framework_spec_manifest.json",
+    "sha256": "6f29b8dc550f723dd59f1c9e27a71900f7c5b849ad2c8032b0f97892911a2e7a",
+    "bytes": 1832
+  },
+  "delivery_version": {
+    "id": "153c64e8-b406-4c7a-b0bc-24272591d23a",
+    "work_item_id": "ad4f70a4-78ae-489d-8319-4ac469cb4bd0",
+    "ordinal": 4,
+    "state": "DRAFT",
+    "change_note": "框架詳細設計候選：API／SQL／權限／狀態／靜態對帳；只規劃，產品驗收未跑，DEV未核定",
+    "source_ref": "/home/sky/projects/agent-project-control/docs/planning/framework_spec_manifest.json",
+    "source_sha256": "6f29b8dc550f723dd59f1c9e27a71900f7c5b849ad2c8032b0f97892911a2e7a",
+    "created_by": "coagents-plan-builder",
+    "created_at": "2026-10-01T00:48:48.214791+00:00"
+  },
+  "gates": [
+    {
+      "id": "ef7a422c-5254-477e-9602-406ca3773f03",
+      "work_version_id": "153c64e8-b406-4c7a-b0bc-24272591d23a",
+      "name": "設計契約完整性與使用者核定待驗",
+      "required": true,
+      "status": "PENDING",
+      "evidence_uri": null,
+      "evidence_sha256": null,
+      "checked_by": null,
+      "checked_at": null
+    },
+    {
+      "id": "c59a1f20-afb8-4588-8ec5-682bd62a3776",
+      "work_version_id": "153c64e8-b406-4c7a-b0bc-24272591d23a",
+      "name": "主控／單次授權／SQL／狀態語意獨立審查待驗",
+      "required": true,
+      "status": "PENDING",
+      "evidence_uri": null,
+      "evidence_sha256": null,
+      "checked_by": null,
+      "checked_at": null
+    },
+    {
+      "id": "90eb2664-5a0e-42a9-a10b-a6040603daf6",
+      "work_version_id": "153c64e8-b406-4c7a-b0bc-24272591d23a",
+      "name": "OpenAPI／DDL／REST-MCP／Dashboard真產品驗收未跑",
+      "required": true,
+      "status": "PENDING",
+      "evidence_uri": null,
+      "evidence_sha256": null,
+      "checked_by": null,
+      "checked_at": null
+    },
+    {
+      "id": "a3a87ca8-e0d8-42cc-96c9-d3baad8ddf80",
+      "work_version_id": "153c64e8-b406-4c7a-b0bc-24272591d23a",
+      "name": "完整R01-R10與X01-X08接入／正式環境完成条件維持待驗",
+      "required": true,
+      "status": "PENDING",
+      "evidence_uri": null,
+      "evidence_sha256": null,
+      "checked_by": null,
+      "checked_at": null
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "8aa54854-621c-40fe-84a0-613dc060c3d0",
+      "project_id": "2811d8cd-5dc5-45cd-8914-155bff67e6ff",
+      "path": "/home/sky/projects/agent-project-control/docs/planning/framework_spec_manifest.json",
+      "sha256": "6f29b8dc550f723dd59f1c9e27a71900f7c5b849ad2c8032b0f97892911a2e7a",
+      "bytes": 1832,
+      "media_type": "application/json",
+      "owner_actor": "coagents-plan-builder",
+      "purpose": "EVIDENCE",
+      "retention_state": "EVIDENCE",
+      "source_ref": "COAGENTS framework specification candidate v1; plan only",
+      "created_at": "2026-10-01T00:48:48.260863+00:00",
+      "deletion_check": {
+        "artifact_id": "8aa54854-621c-40fe-84a0-613dc060c3d0",
+        "path": "/home/sky/projects/agent-project-control/docs/planning/framework_spec_manifest.json",
+        "retention_state": "EVIDENCE",
+        "references": [
+          {
+            "id": "6871f131-ffc6-487d-805c-04f9459c34d9",
+            "artifact_id": "8aa54854-621c-40fe-84a0-613dc060c3d0",
+            "ref_kind": "VERSION",
+            "ref_id": "153c64e8-b406-4c7a-b0bc-24272591d23a",
+            "created_at": "2026-10-01T00:48:48.272694+00:00"
+          }
+        ],
+        "allowed": false,
+        "reason": "still referenced",
+        "scope": "registry only; inspect actual file/process use before physical deletion"
+      }
+    },
+    {
+      "id": "17ff8dfd-3a35-42a0-b476-3abcd46e1990",
+      "project_id": "2811d8cd-5dc5-45cd-8914-155bff67e6ff",
+      "path": "/home/sky/projects/agent-project-control/docs/planning/FRAMEWORK_SPEC.md",
+      "sha256": "69616b53071b7814eb0fa4dd3fdf899ca1f23b9f95e9d5af06a8521d8c6f45df",
+      "bytes": 5185,
+      "media_type": "text/markdown",
+      "owner_actor": "coagents-plan-builder",
+      "purpose": "EVIDENCE",
+      "retention_state": "EVIDENCE",
+      "source_ref": "COAGENTS framework specification candidate v1; plan only",
+      "created_at": "2026-10-01T00:48:48.279787+00:00",
+      "deletion_check": {
+        "artifact_id": "17ff8dfd-3a35-42a0-b476-3abcd46e1990",
+        "path": "/home/sky/projects/agent-project-control/docs/planning/FRAMEWORK_SPEC.md",
+        "retention_state": "EVIDENCE",
+        "references": [
+          {
+            "id": "8481b9cc-549f-48ee-bfe4-43b3a8f147f3",
+            "artifact_id": "17ff8dfd-3a35-42a0-b476-3abcd46e1990",
+            "ref_kind": "VERSION",
+            "ref_id": "153c64e8-b406-4c7a-b0bc-24272591d23a",
+            "created_at": "2026-10-01T00:48:48.288352+00:00"
+          }
+        ],
+        "allowed": false,
+        "reason": "still referenced",
+        "scope": "registry only; inspect actual file/process use before physical deletion"
+      }
+    },
+    {
+      "id": "2be97347-331f-425d-bb1e-820de13b238e",
+      "project_id": "2811d8cd-5dc5-45cd-8914-155bff67e6ff",
+      "path": "/home/sky/projects/agent-project-control/docs/planning/API_CONTRACT.md",
+      "sha256": "50807afc9019b285c2f79203c095b0906e06b7006b5a52e328c87cac5ed353f6",
+      "bytes": 44824,
+      "media_type": "text/markdown",
+      "owner_actor": "coagents-plan-builder",
+      "purpose": "EVIDENCE",
+      "retention_state": "EVIDENCE",
+      "source_ref": "COAGENTS framework specification candidate v1; plan only",
+      "created_at": "2026-10-01T00:48:48.295445+00:00",
+      "deletion_check": {
+        "artifact_id": "2be97347-331f-425d-bb1e-820de13b238e",
+        "path": "/home/sky/projects/agent-project-control/docs/planning/API_CONTRACT.md",
+        "retention_state": "EVIDENCE",
+        "references": [
+          {
+            "id": "321e133a-0f45-43f6-9b56-c0a6e38e1c44",
+            "artifact_id": "2be97347-331f-425d-bb1e-820de13b238e",
+            "ref_kind": "VERSION",
+            "ref_id": "153c64e8-b406-4c7a-b0bc-24272591d23a",
+            "created_at": "2026-10-01T00:48:48.303158+00:00"
+          }
+        ],
+        "allowed": false,
+        "reason": "still referenced",
+        "scope": "registry only; inspect actual file/process use before physical deletion"
+      }
+    },
+    {
+      "id": "5ab732fd-b11f-488b-8f3c-2e678d39d1e3",
+      "project_id": "2811d8cd-5dc5-45cd-8914-155bff67e6ff",
+      "path": "/home/sky/projects/agent-project-control/docs/planning/SQL_MODEL.md",
+      "sha256": "b681d83b9bdc9f368e35ac0f82dd755452a9545d971c7532cf26f121d268e559",
+      "bytes": 23062,
+      "media_type": "text/markdown",
+      "owner_actor": "coagents-plan-builder",
+      "purpose": "EVIDENCE",
+      "retention_state": "EVIDENCE",
+      "source_ref": "COAGENTS framework specification candidate v1; plan only",
+      "created_at": "2026-10-01T00:48:48.309559+00:00",
+      "deletion_check": {
+        "artifact_id": "5ab732fd-b11f-488b-8f3c-2e678d39d1e3",
+        "path": "/home/sky/projects/agent-project-control/docs/planning/SQL_MODEL.md",
+        "retention_state": "EVIDENCE",
+        "references": [
+          {
+            "id": "49d9129a-a213-40a5-a258-3b064f6c6dcf",
+            "artifact_id": "5ab732fd-b11f-488b-8f3c-2e678d39d1e3",
+            "ref_kind": "VERSION",
+            "ref_id": "153c64e8-b406-4c7a-b0bc-24272591d23a",
+            "created_at": "2026-10-01T00:48:48.316436+00:00"
+          }
+        ],
+        "allowed": false,
+        "reason": "still referenced",
+        "scope": "registry only; inspect actual file/process use before physical deletion"
+      }
+    },
+    {
+      "id": "0b76276a-e616-4610-b4f6-7458f17caf5a",
+      "project_id": "2811d8cd-5dc5-45cd-8914-155bff67e6ff",
+      "path": "/home/sky/projects/agent-project-control/docs/planning/AUTHORIZATION_MATRIX.md",
+      "sha256": "f47ad570dfa07c49562eb020ad1bdadba34b09b577b4d9166e1770b90a2810bf",
+      "bytes": 10481,
+      "media_type": "text/markdown",
+      "owner_actor": "coagents-plan-builder",
+      "purpose": "EVIDENCE",
+      "retention_state": "EVIDENCE",
+      "source_ref": "COAGENTS framework specification candidate v1; plan only",
+      "created_at": "2026-10-01T00:48:48.322314+00:00",
+      "deletion_check": {
+        "artifact_id": "0b76276a-e616-4610-b4f6-7458f17caf5a",
+        "path": "/home/sky/projects/agent-project-control/docs/planning/AUTHORIZATION_MATRIX.md",
+        "retention_state": "EVIDENCE",
+        "references": [
+          {
+            "id": "e32367a4-c71c-4562-a89e-eedc4e09875d",
+            "artifact_id": "0b76276a-e616-4610-b4f6-7458f17caf5a",
+            "ref_kind": "VERSION",
+            "ref_id": "153c64e8-b406-4c7a-b0bc-24272591d23a",
+            "created_at": "2026-10-01T00:48:48.329574+00:00"
+          }
+        ],
+        "allowed": false,
+        "reason": "still referenced",
+        "scope": "registry only; inspect actual file/process use before physical deletion"
+      }
+    },
+    {
+      "id": "6e2ec0eb-bfcf-4124-ab01-75cab4da9f47",
+      "project_id": "2811d8cd-5dc5-45cd-8914-155bff67e6ff",
+      "path": "/home/sky/projects/agent-project-control/docs/planning/STATE_MACHINES.md",
+      "sha256": "583d725644198b45c254b1f5f09197b9c3248f19f2014145c3cb3d5f96244f3d",
+      "bytes": 10488,
+      "media_type": "text/markdown",
+      "owner_actor": "coagents-plan-builder",
+      "purpose": "EVIDENCE",
+      "retention_state": "EVIDENCE",
+      "source_ref": "COAGENTS framework specification candidate v1; plan only",
+      "created_at": "2026-10-01T00:48:48.335515+00:00",
+      "deletion_check": {
+        "artifact_id": "6e2ec0eb-bfcf-4124-ab01-75cab4da9f47",
+        "path": "/home/sky/projects/agent-project-control/docs/planning/STATE_MACHINES.md",
+        "retention_state": "EVIDENCE",
+        "references": [
+          {
+            "id": "f97f4a96-b555-47e8-85f6-76707ec2704e",
+            "artifact_id": "6e2ec0eb-bfcf-4124-ab01-75cab4da9f47",
+            "ref_kind": "VERSION",
+            "ref_id": "153c64e8-b406-4c7a-b0bc-24272591d23a",
+            "created_at": "2026-10-01T00:48:48.341457+00:00"
+          }
+        ],
+        "allowed": false,
+        "reason": "still referenced",
+        "scope": "registry only; inspect actual file/process use before physical deletion"
+      }
+    },
+    {
+      "id": "44f27622-2b44-4a44-a619-fb1017fad587",
+      "project_id": "2811d8cd-5dc5-45cd-8914-155bff67e6ff",
+      "path": "/home/sky/projects/agent-project-control/docs/planning/FRAMEWORK_SELFCHECK.md",
+      "sha256": "0de6bfba17080af98f3ab80d71edf76a2090ceaa8c6e8d43fcd6aad90fab5597",
+      "bytes": 7686,
+      "media_type": "text/markdown",
+      "owner_actor": "coagents-plan-builder",
+      "purpose": "EVIDENCE",
+      "retention_state": "EVIDENCE",
+      "source_ref": "COAGENTS framework specification candidate v1; plan only",
+      "created_at": "2026-10-01T00:48:48.347764+00:00",
+      "deletion_check": {
+        "artifact_id": "44f27622-2b44-4a44-a619-fb1017fad587",
+        "path": "/home/sky/projects/agent-project-control/docs/planning/FRAMEWORK_SELFCHECK.md",
+        "retention_state": "EVIDENCE",
+        "references": [
+          {
+            "id": "50f772b1-7332-44df-a025-59941df94ed2",
+            "artifact_id": "44f27622-2b44-4a44-a619-fb1017fad587",
+            "ref_kind": "VERSION",
+            "ref_id": "153c64e8-b406-4c7a-b0bc-24272591d23a",
+            "created_at": "2026-10-01T00:48:48.354240+00:00"
+          }
+        ],
+        "allowed": false,
+        "reason": "still referenced",
+        "scope": "registry only; inspect actual file/process use before physical deletion"
+      }
+    },
+    {
+      "id": "cd323318-b7c1-41a0-a91c-a34de95828ec",
+      "project_id": "2811d8cd-5dc5-45cd-8914-155bff67e6ff",
+      "path": "/home/sky/projects/agent-project-control/docs/planning/framework_selfcheck.json",
+      "sha256": "c386da539d3a8af35e6049c3c082c72fe04a84deb55b41eee6f7445374360842",
+      "bytes": 3212,
+      "media_type": "application/json",
+      "owner_actor": "coagents-plan-builder",
+      "purpose": "EVIDENCE",
+      "retention_state": "EVIDENCE",
+      "source_ref": "COAGENTS framework specification candidate v1; plan only",
+      "created_at": "2026-10-01T00:48:48.360663+00:00",
+      "deletion_check": {
+        "artifact_id": "cd323318-b7c1-41a0-a91c-a34de95828ec",
+        "path": "/home/sky/projects/agent-project-control/docs/planning/framework_selfcheck.json",
+        "retention_state": "EVIDENCE",
+        "references": [
+          {
+            "id": "c87f3254-606e-46dd-857a-853721bb993d",
+            "artifact_id": "cd323318-b7c1-41a0-a91c-a34de95828ec",
+            "ref_kind": "VERSION",
+            "ref_id": "153c64e8-b406-4c7a-b0bc-24272591d23a",
+            "created_at": "2026-10-01T00:48:48.367243+00:00"
+          }
+        ],
+        "allowed": false,
+        "reason": "still referenced",
+        "scope": "registry only; inspect actual file/process use before physical deletion"
+      }
+    }
+  ],
+  "overview": {
+    "id": "73555351-3317-414f-9b81-25b83ffc0306",
+    "body_sha256": "b810ffeae22ebbe930469a3ec03db5c032f77c44771947587a113e3583ec3ce1",
+    "normalization": "v0.2 strip leading/trailing whitespace",
+    "readback_equal": true
+  },
+  "summary_id": "38145d87-effa-4679-96f6-ff429f5211c0",
+  "root_status": "HOLD",
+  "product_progress_percent": 0,
+  "readback": {
+    "version": true,
+    "four_pending_gates": true,
+    "overview": true,
+    "summary": true,
+    "eight_artifact_hashes": true,
+    "version_event": true
+  },
+  "registration_harness_errors": [
+    "KeyError versions: /workspace exposes current_version and gates nested in items",
+    "wrong event lookup work_version_id: AuditEvent uses version_id"
+  ],
+  "recovery": "All writes already committed; GET-only recovery verified persisted data; no duplicate versions or artifacts created.",
+  "temporary_key_revoked": true,
+  "active_builder_key_count": 0,
+  "key_revocation_check": "container PostgreSQL SET TRANSACTION READ ONLY; count member_keys joined members WHERE actor=coagents-plan-builder",
+  "runtime_baseline": {
+    "commit": "b80435e920bd38b9212c08e1cfc1b7bb7d9591e7",
+    "container": "coagents-api-1",
+    "files": [
+      {
+        "path": "/app/src/apc/api.py",
+        "expected": "5f31639a96d0d5ee01e2bee4e2f6c5d8c5c0c8b1d66e70cec618297153b82452",
+        "actual": "5f31639a96d0d5ee01e2bee4e2f6c5d8c5c0c8b1d66e70cec618297153b82452",
+        "equal": true
+      },
+      {
+        "path": "/app/src/apc/models.py",
+        "expected": "845529fe7a7bd366c29c926d4ce00d0f595b37b6dd006743f33a22fae620bb3c",
+        "actual": "845529fe7a7bd366c29c926d4ce00d0f595b37b6dd006743f33a22fae620bb3c",
+        "equal": true
+      },
+      {
+        "path": "/app/src/apc/mcp/server.py",
+        "expected": "d1e61940ddf13237c5aa2e4cbb897d72a82fc5a5dfd73d8ffcb293e0715087f0",
+        "actual": "d1e61940ddf13237c5aa2e4cbb897d72a82fc5a5dfd73d8ffcb293e0715087f0",
+        "equal": true
+      }
+    ]
+  },
+  "provider_requests": 0,
+  "dev_authorized": false,
+  "production_access": false,
+  "independent_review": false
+}
