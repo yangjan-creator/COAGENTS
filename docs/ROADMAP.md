@@ -28,5 +28,8 @@ single-use authorization and typed knowledge/code registries are also retained.
 The [framework detail index](planning/FRAMEWORK_SPEC.md) links the candidate API, SQL, permission
 and state-machine contracts. Its static self-check is not runtime acceptance or permission to start DEV.
 
-Planning has been dogfooded in the running v0.2. New implementation remains on hold until the user
-approves the plan; unfinished drafts in a developer worktree are not part of the public service.
+Planning has been dogfooded in the running v0.2. Development was authorized in phases; current
+phase permissions and progress are recorded in the SQL-backed project, not inferred from this
+roadmap or the approval state of an older planning snapshot. Unfinished drafts and accepted
+isolated candidates are not automatically part of the public release or the running service.
+See [control records and development authority](architecture/CONTROL_AUTHORITY.md).

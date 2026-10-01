@@ -110,6 +110,9 @@ Typed project records/context packs and Traditional Chinese/English localization
 requirements, not features already available. This authorization does not authorize production
 deployment or importing real team data.
 
+See [control records and development authority](docs/architecture/CONTROL_AUTHORITY.md) for
+how to distinguish current SQL state, historical plans, delivery verification and deployment.
+
 ## Open source
 
 [Apache-2.0](LICENSE). All implementation here is original code. The three reference products'
