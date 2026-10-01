@@ -1,0 +1,63 @@
+{
+  "author": "滴",
+  "kind": "COAGENTS_PLAN_COMPLETION_ADDENDUM_V1",
+  "status": "CANDIDATE_REQUIRES_USER_APPROVAL_NO_DEV",
+  "source_release": "b80435e920bd38b9212c08e1cfc1b7bb7d9591e7",
+  "files": [
+    {
+      "path": "docs/planning/PLAN_V1_SNAPSHOT.md",
+      "sha256": "390967ac9b69505eb028599fb589fd0e9a73dc905cc1b2a7221d2c96348a6863",
+      "bytes": 28637
+    },
+    {
+      "path": "docs/planning/COMPLETION_MATRIX.md",
+      "sha256": "9182ee35a2f6e3998c974f2fbfc285151ff4e44ceb587de380e7274ac2857784",
+      "bytes": 9737
+    },
+    {
+      "path": "docs/planning/EXECUTION_BLUEPRINT.md",
+      "sha256": "653dbe70277704dd5be433b6b73e385b90d121697e08fefa92714ec9cd0b4866",
+      "bytes": 14396
+    },
+    {
+      "path": "docs/planning/current_state_20261001.json",
+      "sha256": "44347c17096c1f92b19bf08c1fe91e29f029d9bbff10381510d73761c33a642c",
+      "bytes": 8429
+    }
+  ],
+  "requirement_ids": [
+    "B01",
+    "B02",
+    "B03",
+    "B04",
+    "B05",
+    "B06",
+    "B07",
+    "B08",
+    "B09",
+    "B10",
+    "R01",
+    "R02",
+    "R03",
+    "R04",
+    "R05",
+    "R06",
+    "R07",
+    "R08",
+    "R09",
+    "R10",
+    "X01",
+    "X02",
+    "X03",
+    "X04",
+    "X05",
+    "X06",
+    "X07",
+    "X08"
+  ],
+  "notes": [
+    "Original plan snapshot retained unchanged.",
+    "SSO required; production and real-person onboarding not substituted by localhost.",
+    "New development/deployment still not authorized."
+  ]
+}

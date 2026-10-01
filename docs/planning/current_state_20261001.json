@@ -1,0 +1,288 @@
+{
+  "author": "滴",
+  "measured_at": "2026-09-30T23:57:29.426173+00:00",
+  "method": "authenticated GET /healthz, /openapi.json, project-scoped /workspace; docker exec sha256sum; git show pinned release source; no source import",
+  "scope": "local COAGENTS API only; no VPS/real-team/LLM",
+  "service": {
+    "status": "ok",
+    "service": "COAGENTS",
+    "version": "0.2.0"
+  },
+  "public_source_baseline": "b80435e920bd38b9212c08e1cfc1b7bb7d9591e7",
+  "documentation_commit": "503dc2284c73a9f700c314a45e88dcdd58c91769",
+  "runtime_source_match": {
+    "/app/src/apc/api.py": true,
+    "/app/src/apc/models.py": true,
+    "/app/src/apc/mcp/server.py": true
+  },
+  "runtime_file_hashes": [
+    "5f31639a96d0d5ee01e2bee4e2f6c5d8c5c0c8b1d66e70cec618297153b82452  /app/src/apc/api.py",
+    "845529fe7a7bd366c29c926d4ce00d0f595b37b6dd006743f33a22fae620bb3c  /app/src/apc/models.py",
+    "d1e61940ddf13237c5aa2e4cbb897d72a82fc5a5dfd73d8ffcb293e0715087f0  /app/src/apc/mcp/server.py"
+  ],
+  "api_operations": [
+    {
+      "method": "GET",
+      "path": "/",
+      "operation_id": "dashboard__get"
+    },
+    {
+      "method": "POST",
+      "path": "/artifacts/{artifact_id}/deleted",
+      "operation_id": "mark_deleted_artifacts__artifact_id__deleted_post"
+    },
+    {
+      "method": "GET",
+      "path": "/artifacts/{artifact_id}/deletion-check",
+      "operation_id": "check_delete_artifacts__artifact_id__deletion_check_get"
+    },
+    {
+      "method": "POST",
+      "path": "/artifacts/{artifact_id}/references",
+      "operation_id": "artifact_ref_artifacts__artifact_id__references_post"
+    },
+    {
+      "method": "GET",
+      "path": "/dashboard",
+      "operation_id": "dashboard_dashboard_get"
+    },
+    {
+      "method": "GET",
+      "path": "/dashboard-templates",
+      "operation_id": "templates_dashboard_templates_get"
+    },
+    {
+      "method": "POST",
+      "path": "/dashboard-templates",
+      "operation_id": "template_create_dashboard_templates_post"
+    },
+    {
+      "method": "POST",
+      "path": "/dashboard-templates/{template_id}/revisions",
+      "operation_id": "template_revision_dashboard_templates__template_id__revisions_post"
+    },
+    {
+      "method": "POST",
+      "path": "/gates/{gate_id}/result",
+      "operation_id": "gate_result_gates__gate_id__result_post"
+    },
+    {
+      "method": "GET",
+      "path": "/healthz",
+      "operation_id": "health_healthz_get"
+    },
+    {
+      "method": "GET",
+      "path": "/items/{item_id}",
+      "operation_id": "read_item_items__item_id__get"
+    },
+    {
+      "method": "PATCH",
+      "path": "/items/{item_id}",
+      "operation_id": "edit_item_items__item_id__patch"
+    },
+    {
+      "method": "POST",
+      "path": "/items/{item_id}/claim",
+      "operation_id": "claim_items__item_id__claim_post"
+    },
+    {
+      "method": "POST",
+      "path": "/items/{item_id}/close",
+      "operation_id": "close_items__item_id__close_post"
+    },
+    {
+      "method": "POST",
+      "path": "/items/{item_id}/dependencies",
+      "operation_id": "dependency_items__item_id__dependencies_post"
+    },
+    {
+      "method": "GET",
+      "path": "/items/{item_id}/history",
+      "operation_id": "item_history_items__item_id__history_get"
+    },
+    {
+      "method": "POST",
+      "path": "/items/{item_id}/progress",
+      "operation_id": "progress_items__item_id__progress_post"
+    },
+    {
+      "method": "POST",
+      "path": "/items/{item_id}/versions",
+      "operation_id": "version_items__item_id__versions_post"
+    },
+    {
+      "method": "GET",
+      "path": "/members",
+      "operation_id": "list_members_members_get"
+    },
+    {
+      "method": "POST",
+      "path": "/members",
+      "operation_id": "create_member_members_post"
+    },
+    {
+      "method": "POST",
+      "path": "/members/{member_id}/keys",
+      "operation_id": "issue_member_key_members__member_id__keys_post"
+    },
+    {
+      "method": "DELETE",
+      "path": "/members/{member_id}/keys/{key_id}",
+      "operation_id": "revoke_member_key_members__member_id__keys__key_id__delete"
+    },
+    {
+      "method": "GET",
+      "path": "/projects",
+      "operation_id": "list_projects_projects_get"
+    },
+    {
+      "method": "POST",
+      "path": "/projects",
+      "operation_id": "create_project_projects_post"
+    },
+    {
+      "method": "POST",
+      "path": "/projects/{project_id}/artifacts",
+      "operation_id": "artifact_projects__project_id__artifacts_post"
+    },
+    {
+      "method": "GET",
+      "path": "/projects/{project_id}/history",
+      "operation_id": "history_projects__project_id__history_get"
+    },
+    {
+      "method": "POST",
+      "path": "/projects/{project_id}/items",
+      "operation_id": "create_item_projects__project_id__items_post"
+    },
+    {
+      "method": "POST",
+      "path": "/projects/{project_id}/overview",
+      "operation_id": "overview_projects__project_id__overview_post"
+    },
+    {
+      "method": "POST",
+      "path": "/projects/{project_id}/pm-summaries",
+      "operation_id": "summary_projects__project_id__pm_summaries_post"
+    },
+    {
+      "method": "GET",
+      "path": "/session",
+      "operation_id": "identity_session_get"
+    },
+    {
+      "method": "GET",
+      "path": "/teams",
+      "operation_id": "list_teams_teams_get"
+    },
+    {
+      "method": "POST",
+      "path": "/teams",
+      "operation_id": "create_team_teams_post"
+    },
+    {
+      "method": "POST",
+      "path": "/versions/{version_id}/gates",
+      "operation_id": "gate_versions__version_id__gates_post"
+    },
+    {
+      "method": "GET",
+      "path": "/workspace",
+      "operation_id": "workspace_workspace_get"
+    }
+  ],
+  "operation_count": 34,
+  "mcp_tools_from_pinned_source": [
+    "list_projects",
+    "workspace",
+    "create_team",
+    "register_member",
+    "create_project",
+    "create_work_item",
+    "claim_work_item",
+    "report_progress",
+    "create_delivery_version",
+    "declare_validation_gate",
+    "record_validation_result",
+    "add_dependency",
+    "close_work_item",
+    "update_project_overview",
+    "append_pm_summary",
+    "register_artifact",
+    "link_artifact",
+    "artifact_deletion_check",
+    "project_history",
+    "item_history",
+    "list_dashboard_templates",
+    "save_dashboard_template",
+    "revise_dashboard_template"
+  ],
+  "mcp_tool_count": 23,
+  "implementation_gaps": {
+    "schedules_notifications_webhooks": true,
+    "sso": true,
+    "versioned_migration": true,
+    "git_sync": true,
+    "project_control_single_use": true
+  },
+  "planning_state": {
+    "project_key": "CG-PLAN",
+    "items": [
+      {
+        "id": "ad4f70a4-78ae-489d-8319-4ac469cb4bd0",
+        "key": "CG-PLAN-ROOT",
+        "status": "HOLD",
+        "current_version_id": "1c4c02f2-c961-486c-b165-73da24d5793a"
+      },
+      {
+        "id": "1e263693-50b3-4641-a322-882b3c999136",
+        "key": "CG-PLAN-AUTH",
+        "status": "HOLD",
+        "current_version_id": null
+      },
+      {
+        "id": "68309bb5-4153-417f-bdf1-b261c3c3f668",
+        "key": "CG-PLAN-KNOW",
+        "status": "HOLD",
+        "current_version_id": null
+      },
+      {
+        "id": "1733dfad-52be-4af4-bc87-87c19a00aef1",
+        "key": "CG-PLAN-CODE",
+        "status": "HOLD",
+        "current_version_id": null
+      },
+      {
+        "id": "90871d6f-ad36-42d3-abf3-90f3bf380551",
+        "key": "CG-PLAN-GATE",
+        "status": "HOLD",
+        "current_version_id": null
+      },
+      {
+        "id": "3bd8db48-1103-4171-b12d-adf768bff349",
+        "key": "CG-PLAN-UI",
+        "status": "HOLD",
+        "current_version_id": null
+      },
+      {
+        "id": "3b7fc23d-149f-4677-8e06-ef03d0da13a1",
+        "key": "CG-PLAN-OPS",
+        "status": "HOLD",
+        "current_version_id": null
+      }
+    ],
+    "artifact_count": 2,
+    "overview_count": 2,
+    "summary_count": 1
+  },
+  "provider_requests": 0,
+  "writes": 0,
+  "limits": [
+    "Route absence proves public API coverage only, not arbitrary-file nonexistence.",
+    "Pinned runtime-source checks cover three files, not every file or all workflows.",
+    "SSO, real onboarding, production and restore evidence are not supplied by this localhost check.",
+    "Earlier checks in docs/VERIFICATION.md remain historical; they were not re-run here."
+  ],
+  "diagnostic_correction": "Initial /health probe returned 404; actual declared health endpoint is /healthz. Only /healthz result bears service status."
+}

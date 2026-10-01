@@ -89,6 +89,14 @@ The all-project dashboard shows the most recent 200 events; select a project in 
 view to load its complete history. Full per-item histories are also available. Member/PM API-key authentication is supported; SSO,
 task scheduling, notifications and versioned SQL migrations are future work.
 
+## Complete project plan
+
+The [product plan](docs/PROJECT_PLAN.md), [requirement-by-requirement completion matrix](docs/planning/COMPLETION_MATRIX.md)
+and [execution blueprint](docs/planning/EXECUTION_BLUEPRINT.md) describe the remaining work, permissions,
+acceptance gates, real-team onboarding and production/restore requirements. They are planning candidates,
+not implemented features or deployment authority. [v0.2 dogfooding](docs/planning/DOGFOOD_V02.md) records
+what the current service can actually manage; the COAGENTS planning project is `CG-PLAN`.
+
 ## Open source
 
 [Apache-2.0](LICENSE). All implementation here is original code. The three reference products'

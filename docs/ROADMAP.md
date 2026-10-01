@@ -16,3 +16,14 @@ checks are included. Synthetic demo is opt-in.
 - SSO and more granular project permissions.
 
 These are future features. COAGENTS never requires external project-management products.
+
+## Full objective and acceptance
+
+See the [complete project plan](PROJECT_PLAN.md), [completion matrix](planning/COMPLETION_MATRIX.md)
+and [execution blueprint](planning/EXECUTION_BLUEPRINT.md). The matrix preserves all remaining requirements:
+scheduling, notifications, webhooks, SSO, SQL upgrade/rollback, automatic Git history synchronization,
+real 羽/思 onboarding, production deployment, restore and long-term operation. Project controllers,
+single-use authorization and typed knowledge/code registries are also retained.
+
+Planning has been dogfooded in the running v0.2. New implementation remains on hold until the user
+approves the plan; unfinished drafts in a developer worktree are not part of the public service.

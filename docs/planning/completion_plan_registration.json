@@ -1,0 +1,176 @@
+{
+  "author": "滴",
+  "kind": "PLAN_ONLY_DOGFOOD_ADDENDUM",
+  "project_key": "CG-PLAN",
+  "project_id": "2811d8cd-5dc5-45cd-8914-155bff67e6ff",
+  "manifest": {
+    "path": "/home/sky/projects/agent-project-control/docs/planning/completion_plan_manifest.json",
+    "sha256": "e5290dc64a3d6f142279baf9ec69fa0f95e96ac5a487120392b5beff9cb4e2ef",
+    "bytes": 1441
+  },
+  "delivery_version": {
+    "id": "0942a46e-1fb0-4089-990f-60383f1000f9",
+    "work_item_id": "ad4f70a4-78ae-489d-8319-4ac469cb4bd0",
+    "ordinal": 3,
+    "state": "DRAFT",
+    "change_note": "計畫補頁：保留全範圍28條需求，完成矩陣＋執行藍圖；僅規劃，DEV未核定",
+    "source_ref": "/home/sky/projects/agent-project-control/docs/planning/completion_plan_manifest.json",
+    "source_sha256": "e5290dc64a3d6f142279baf9ec69fa0f95e96ac5a487120392b5beff9cb4e2ef",
+    "created_by": "coagents-plan-builder",
+    "created_at": "2026-10-01T00:10:05.223618+00:00"
+  },
+  "artifact": {
+    "id": "1590d0fe-a38b-4d18-8c2c-47d554008888",
+    "project_id": "2811d8cd-5dc5-45cd-8914-155bff67e6ff",
+    "path": "/home/sky/projects/agent-project-control/docs/planning/completion_plan_manifest.json",
+    "sha256": "e5290dc64a3d6f142279baf9ec69fa0f95e96ac5a487120392b5beff9cb4e2ef",
+    "bytes": 1441,
+    "media_type": "application/json",
+    "owner_actor": "coagents-plan-builder",
+    "purpose": "EVIDENCE",
+    "retention_state": "EVIDENCE",
+    "source_ref": "COAGENTS full plan completion addendum v1",
+    "created_at": "2026-10-01T00:10:05.255089+00:00"
+  },
+  "gates": [
+    {
+      "id": "8b37b87e-9a7e-4fab-b339-78c127a2930c",
+      "work_version_id": "0942a46e-1fb0-4089-990f-60383f1000f9",
+      "name": "完整原目標B01–B10/R01–R10及擴充X01–X08無縮範圍待核定",
+      "required": true,
+      "status": "PENDING",
+      "evidence_uri": null,
+      "evidence_sha256": null,
+      "checked_by": null,
+      "checked_at": null
+    },
+    {
+      "id": "77952df9-2e0c-49f5-92a5-1b7a97845fe6",
+      "work_version_id": "0942a46e-1fb0-4089-990f-60383f1000f9",
+      "name": "SQL／安全／排程／通知／Webhook／SSO／Git的交付與負控待核定",
+      "required": true,
+      "status": "PENDING",
+      "evidence_uri": null,
+      "evidence_sha256": null,
+      "checked_by": null,
+      "checked_at": null
+    },
+    {
+      "id": "341c2f8d-3fd1-4653-8168-beab3cb106f6",
+      "work_version_id": "0942a46e-1fb0-4089-990f-60383f1000f9",
+      "name": "羽思本人接入／正式部署／restore／長期觀察條件待核定",
+      "required": true,
+      "status": "PENDING",
+      "evidence_uri": null,
+      "evidence_sha256": null,
+      "checked_by": null,
+      "checked_at": null
+    },
+    {
+      "id": "74167a70-bd54-4472-8ab5-7b7d77a88cfd",
+      "work_version_id": "0942a46e-1fb0-4089-990f-60383f1000f9",
+      "name": "本輪v0.2自用與實況證據範圍待獨立確認",
+      "required": true,
+      "status": "PENDING",
+      "evidence_uri": null,
+      "evidence_sha256": null,
+      "checked_by": null,
+      "checked_at": null
+    }
+  ],
+  "tasks": [
+    {
+      "requirement_id": "R01",
+      "key": "CG-PLAN-MIGRATE",
+      "id": "2e90cc3b-ddb9-42a2-8e3c-cb180f633410",
+      "parent_id": "3b7fc23d-149f-4677-8e06-ef03d0da13a1",
+      "status": "HOLD",
+      "progress_percent": 0
+    },
+    {
+      "requirement_id": "R02",
+      "key": "CG-PLAN-SCHEDULE",
+      "id": "5e9c95fd-e4b4-4a39-b72d-22711918bfb6",
+      "parent_id": "3b7fc23d-149f-4677-8e06-ef03d0da13a1",
+      "status": "HOLD",
+      "progress_percent": 0
+    },
+    {
+      "requirement_id": "R03",
+      "key": "CG-PLAN-NOTIFY",
+      "id": "2a3899cf-cd6e-42f0-9277-f57c61d088d0",
+      "parent_id": "3b7fc23d-149f-4677-8e06-ef03d0da13a1",
+      "status": "HOLD",
+      "progress_percent": 0
+    },
+    {
+      "requirement_id": "R04",
+      "key": "CG-PLAN-WEBHOOK",
+      "id": "ccacd9be-9f38-4354-be91-e0eb927f1790",
+      "parent_id": "3b7fc23d-149f-4677-8e06-ef03d0da13a1",
+      "status": "HOLD",
+      "progress_percent": 0
+    },
+    {
+      "requirement_id": "R05",
+      "key": "CG-PLAN-SSO",
+      "id": "80adebe0-5139-404d-86d5-5981c7cf0e0e",
+      "parent_id": "1e263693-50b3-4641-a322-882b3c999136",
+      "status": "HOLD",
+      "progress_percent": 0
+    },
+    {
+      "requirement_id": "R06",
+      "key": "CG-PLAN-GITSYNC",
+      "id": "16a2c8a3-d978-4458-884a-1b7a3fbe6076",
+      "parent_id": "1733dfad-52be-4af4-bc87-87c19a00aef1",
+      "status": "HOLD",
+      "progress_percent": 0
+    },
+    {
+      "requirement_id": "R07",
+      "key": "CG-PLAN-ONBOARD",
+      "id": "40271bf5-1de2-4410-85f5-5de5bb0c7469",
+      "parent_id": "90871d6f-ad36-42d3-abf3-90f3bf380551",
+      "status": "HOLD",
+      "progress_percent": 0
+    },
+    {
+      "requirement_id": "R08",
+      "key": "CG-PLAN-DEPLOY",
+      "id": "f6b32483-cb50-49f7-97f5-f535cc83482d",
+      "parent_id": "3b7fc23d-149f-4677-8e06-ef03d0da13a1",
+      "status": "HOLD",
+      "progress_percent": 0
+    },
+    {
+      "requirement_id": "R09",
+      "key": "CG-PLAN-RESTORE",
+      "id": "1b41a9cc-6bdd-4172-bae2-54fdd737c4ff",
+      "parent_id": "3b7fc23d-149f-4677-8e06-ef03d0da13a1",
+      "status": "HOLD",
+      "progress_percent": 0
+    },
+    {
+      "requirement_id": "R10",
+      "key": "CG-PLAN-SOAK",
+      "id": "20bdf770-3bed-4ba0-ae55-9209409e2f6b",
+      "parent_id": "3b7fc23d-149f-4677-8e06-ef03d0da13a1",
+      "status": "HOLD",
+      "progress_percent": 0
+    }
+  ],
+  "overview": {
+    "id": "34cbb7bf-475c-44b6-b1bc-26e7ad7c1eed",
+    "body_sha256": "bb410362d873db63cad254fc08c01c26c927a4b4ea99a1e3eccd687ec5a2b545",
+    "normalization": "strip leading/trailing whitespace",
+    "readback_equal": true
+  },
+  "summary_id": "ddbd5b11-98ce-4317-8bd0-8215d5ce203c",
+  "root_status": "HOLD",
+  "provider_requests": 0,
+  "production_access": false,
+  "dev_authorized": false,
+  "temporary_key_revoked": true,
+  "independent_review": false
+}
